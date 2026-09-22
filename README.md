@@ -64,7 +64,7 @@ A layered monolithic architecture (controller → service → repository) built 
 
 ## Data Model
 
-Full entity-relationship diagram:
+![Diagrama entidad-relación](docs/er-diagram.png)
 
 
 The full DDL script is available at [`/database/schema.sql`](./database/schema.sql).
