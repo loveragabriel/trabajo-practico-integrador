@@ -1,97 +1,85 @@
 # TP 🐾
 
-Aplicación web que conecta dueños de mascotas con paseadores de perros en la Ciudad Autónoma de Buenos Aires, permitiendo publicar la disponibilidad de paseadores por zona, gestionar una agenda de paseos y visualizar la cobertura geográfica de cada paseador.
+A web application that connects pet owners with dog walkers in the City of Buenos Aires (CABA), allowing walkers to publish their availability by zone, manage a walk schedule, and letting owners view each walker's coverage area on a map.
 
-**Trabajo Final Integrador — Tecnicatura Universitaria en Programación a Distancia (TUPaD), UTN**
+**Capstone Project (Trabajo Final Integrador) — Tecnicatura Universitaria en Programación a Distancia (TUPaD), UTN**
 
-## Integrantes
+## Team
 
 - Gastón Lell
 - Juan Cruz Leal
 - Gabriel Lovera
 
-## Índice
+## Table of Contents
 
-- [Propósito](#propósito)
-- [Alcance del MVP](#alcance-del-mvp)
-- [Stack tecnológico](#stack-tecnológico)
-- [Arquitectura](#arquitectura)
-- [Modelo de datos](#modelo-de-datos)
-- [Decisiones de diseño](#decisiones-de-diseño)
-- [Instalación y ejecución](#instalación-y-ejecución)
-- [Estructura del repositorio](#estructura-del-repositorio)
-- [Roadmap de entregas](#roadmap-de-entregas)
+- [Purpose](#purpose)
+- [MVP Scope](#mvp-scope)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Data Model](#data-model)
+- [Design Decisions](#design-decisions)
+- [Installation and Setup](#installation-and-setup)
+- [Repository Structure](#repository-structure)
+- [Delivery Roadmap](#delivery-roadmap)
 
-## Propósito
+## Purpose
 
-La Ciudad Autónoma de Buenos Aires atraviesa un cambio demográfico estructural con una población de mascotas que supera ampliamente a la de niños y adolescentes (493.676 perros y 368.176 gatos frente a 460.696 niños y niñas menores de 14 años, según INDEC 2022). Esto ha generado una demanda creciente de paseadores de perros, cuya coordinación con los dueños hoy se resuelve de forma informal (WhatsApp, redes sociales, boca en boca), sin pocas opciones de un sistema que centralice disponibilidad, zona de cobertura y agenda.
+The City of Buenos Aires is undergoing a structural demographic shift: its pet population now far exceeds its child population (493,676 dogs and 368,176 cats compared to 460,696 children under 14, according to INDEC 2022). This has driven growing demand for dog walking services, yet coordination between owners and walkers is still handled informally today like WhatsApp, social media with no system to centralize availability, coverage area, and scheduling.
 
-Este proyecto busca reemplazar esa coordinación informal por una plataforma centralizada y confiable.
+This project is looking for replacing that informal coordination with a centralized, reliable platform.
 
-## Alcance del MVP
+## MVP Scope
 
-**Incluye:**
-- Registro y perfil de dos roles: Dueño y Paseador
-- Publicación de perfil de paseador con zonas de cobertura (barrios predefinidos), disponibilidad horaria y tarifa referencial
-- Visualización de zonas de cobertura en un mapa (Leaflet + OpenStreetMap)
-- Búsqueda y matching de paseadores por zona y disponibilidad
-- Agenda de paseos: solicitar, aceptar/rechazar, ver horarios pactados
-- Historial básico de paseos agendados
+**In scope:**
+- Registration and profiles for two roles: Owner and Walker
+- Walker profile publishing with coverage zones (predefined neighborhoods), time availability, and a reference hourly rate
+- Coverage zone visualization on a map (Leaflet + OpenStreetMap)
+- Walker search and matching by zone and availability
+- Walk scheduling: request, accept/reject, view agreed times
+- Basic history of scheduled walks
 
-**Fuera de alcance:**
-- Pagos online integrados
-- Seguimiento GPS en tiempo real durante el paseo
-- Aplicación móvil nativa (la web será responsive)
-- Sistema de calificaciones/reviews (mejora futura)
-- Dibujo libre de zonas en el mapa (se usan barrios predefinidos, no polígonos geoespaciales)
+**Out of scope:**
+- Integrated online payments
+- Real-time GPS tracking during the walk
+- Native mobile app (the web app will be responsive)
+- Rating/review system (future enhancement)
+- Free-form zone drawing on the map (predefined neighborhoods are used instead of geospatial polygons)
 
-## Stack tecnológico
+## Tech Stack
 
-| Capa | Tecnología |
+| Layer | Technology |
 |---|---|
 | Frontend | TypeScript + React |
 | Backend | Java + Spring Boot |
-| Base de datos | PostgreSQL |
-| Mapa | Leaflet + OpenStreetMap |
-| Autenticación | Spring Security + JWT |
-| Despliegue Frontend | Vercel / Netlify |
-| Despliegue Backend | Render / Railway |
-| Despliegue Base de Datos | Railway / Supabase |
+| Database | PostgreSQL |
+| Map | Leaflet + OpenStreetMap |
+| Authentication | Spring Security + JWT |
+| Frontend Deployment | Vercel / Netlify |
+| Backend Deployment | Render / Railway |
+| Database Deployment | Railway / Supabase |
 
-## Arquitectura
+## Architecture
 
-Arquitectura monolítica en capas (controller → service → repository) con Spring Boot. Se descartó una arquitectura de microservicios porque el dominio del proyecto (dueños, paseadores, paseos, zonas) no presenta módulos con ciclos de vida ni equipos independientes que justifiquen esa complejidad operativa; un monolito en capas es ejecutable dentro del plazo de la cursada y no introduce sobre-ingeniería.
+A layered monolithic architecture (controller → service → repository) built with Spring Boot. A microservices architecture is out of the scope because the project's domain (owners, walkers, walks, zones) has no modules with independent lifecycles or teams that would justify that operational complexity; a layered monolith is achievable within the course timeline and avoids over-engineering.
 
-## Modelo de datos
+## Data Model
 
-Diagrama entidad-relación completo:
+Full entity-relationship diagram:
 
 
-El script DDL completo se encuentra en [`/database/schema.sql`](./database/schema.sql).
+The full DDL script is available at [`/database/schema.sql`](./database/schema.sql).
 
-## Decisiones de diseño
+## Design Decisions
 
-### Tabla única de usuarios (`USERS`) con campo `role`
+### Single `USERS` table with a `role` field
 
-Se optó por una única tabla `USERS` con un campo `role`, en lugar de tablas separadas desde el inicio (`OWNERS` y `WALKERS`), porque ambos roles comparten el mismo núcleo de datos de identidad —nombre, email, contraseña, DNI— y el sistema tiene solo dos roles fijos y mutuamente excluyentes, sin necesidad de que un usuario acumule varios roles a la vez ni de agregar roles nuevos dinámicamente.
+A single `USERS` table with a `role` field was chosen over separate tables (`OWNERS` and `WALKERS`) from the start, because both roles share the same core identity data — name, email, password, national ID — and the system has only two fixed, mutually exclusive roles, with no need for a user to hold multiple roles at once or for new roles to be added dynamically.
 
-El trade-off es consciente: se evita la complejidad de una tabla de roles normalizada (`roles` + tabla puente `user_roles`), que solo aportaría valor si el sistema necesitara roles configurables o múltiples por usuario — un caso fuera del alcance del MVP. Los atributos que sí son exclusivos del Paseador (tarifa, descripción, zonas, disponibilidad) se aíslan en `WALKER_PROFILES` mediante una relación 1:1 (equivalente relacional a herencia por tabla de subtipo), evitando columnas vacías en los Dueños sin necesidad de fragmentar también los datos de identidad que ambos roles comparten por igual.
+This is a deliberate trade-off that avoids the complexity of a normalized roles table (`roles` plus a `user_roles` join table), which would only add value if the system required configurable or multiple roles per user, for this case outside the MVP's scope. 
 
-### `WALKER_PROFILES` como tabla separada
+## Installation and Setup
 
-Contiene únicamente los atributos propios del rol Paseador (`description`, `hourly_rate`). Se mapea en Java con una relación `@OneToOne` (o herencia `JOINED` de JPA) hacia `User`, permitiendo que el resto del dominio (`WALKS`, `WALKER_ZONES`, `WALKER_AVAILABILITY`) referencie al perfil de paseador sin acoplarse a la tabla genérica de usuarios.
-
-### Relación N:M entre paseadores y zonas
-
-Un paseador puede cubrir varias zonas y una zona puede tener varios paseadores, por lo que la relación se modela con una tabla intermedia (`WALKER_ZONES`) en lugar de una FK directa en `WALKER_PROFILES`.
-
-### Sin arquitectura de microservicios
-
-Ver sección [Arquitectura](#arquitectura).
-
-## Instalación y ejecución
-
-> ⚠️ Sección a completar a medida que se desarrollen el backend y el frontend.
+> ⚠️ Section to be completed 
 
 ```bash
 # Backend
@@ -104,26 +92,26 @@ npm install
 npm run dev
 ```
 
-Variables de entorno necesarias (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
+Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
 
-## Estructura del repositorio
+## Repository Structure
 
 ```
-pawmatch/
-├── backend/          # API REST — Java + Spring Boot
-├── frontend/         # Aplicación web — TypeScript + React
+walkingpet/
+├── backend/          # REST API — Java + Spring Boot
+├── frontend/         # Web app — TypeScript + React
 ├── database/
-│   └── schema.sql    # Script DDL — PostgreSQL
+│   └── schema.sql    # DDL script — PostgreSQL
 ├── docs/
-│   └── propuesta.md  # Propuesta de proyecto (1ª Entrega)
+│   └── proposal.md   # Project proposal (1st Delivery)
 └── README.md
 ```
 
-## Roadmap de entregas
+## Delivery Roadmap
 
-| Hito | Fecha máxima | Estado |
+| Milestone | Deadline | Status |
 |---|---|---|
-| 1ª Entrega — Propuesta + Repositorio | 30/08/2026 | ✅ |
-| 2ª Entrega — Diseño de BD y módulos | 27/09/2026 | 🔄 En curso |
-| Entrega Final — Informe, video y despliegue | 14/11/2026 | ⏳ Pendiente |
-| Defensa Oral | En mesa de examen | ⏳ Pendiente |
+| 1st Delivery — Proposal + Repository | 08/30/2026 | ✅ |
+| 2nd Delivery — DB design and modules | 09/27/2026 | 🔄 In progress |
+| Final Delivery — Report, video, and deployment | 11/14/2026 | ⏳ Pending |
+| Oral Defense | Exam board | ⏳ Pending |
