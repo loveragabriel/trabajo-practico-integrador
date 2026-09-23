@@ -1,6 +1,6 @@
 # TP 🐾
 
-A web application that connects pet owners with dog walkers in the City of Buenos Aires (CABA), allowing walkers to publish their availability by zone, manage a walk schedule, and letting owners view each walker's coverage area on a map.
+A web application that connects pet owners with dog walkers in the City of Buenos Aires (CABA). Walkers publish group walks — schedule, zone, meeting point, capacity, and price per pet — and owners join with their pets while there's room, replacing informal WhatsApp/social-media coordination with a centralized, reliable platform.
 
 **Capstone Project (Trabajo Final Integrador) — Tecnicatura Universitaria en Programación a Distancia (TUPaD), UTN**
 
@@ -31,18 +31,19 @@ This project is looking for replacing that informal coordination with a centrali
 ## MVP Scope
 
 **In scope:**
-- Registration and profiles for two roles: Owner and Walker
-- Walker profile publishing with coverage zones (predefined neighborhoods), time availability, and a reference hourly rate
+- Registration and profiles for two roles: Owner (client) and Walker
+- Walker profile publishing with coverage zones (predefined neighborhoods), a reference price per pet, and a default group capacity
 - Coverage zone visualization on a map (Leaflet + OpenStreetMap)
-- Walker search and matching by zone and availability
-- Walk scheduling: request, accept/reject, view agreed times
+- Search for published walks by zone
+- Group walk publishing and booking: walkers publish a walk with schedule, meeting point, capacity, and price per pet; owners join their pets until the walk is full. There is no request/accept flow — owners join what's already published
+- Rating and review system for completed walks
 - Basic history of scheduled walks
 
 **Out of scope:**
 - Integrated online payments
 - Real-time GPS tracking during the walk
 - Native mobile app (the web app will be responsive)
-- Rating/review system (future enhancement)
+- Recurring or declared walker availability schedules (a walk's own publication *is* the availability signal — see design decisions)
 - Free-form zone drawing on the map (predefined neighborhoods are used instead of geospatial polygons)
 
 ## Tech Stack
@@ -66,8 +67,7 @@ A layered monolithic architecture (controller → service → repository) built 
 
 ![Diagrama entidad-relación](docs/er-diagram.png)
 
-
-The full DDL script is available at [`/database/schema.sql`](./database/schema.sql).
+Seven tables: `zones`, `users`, `walker_zones`, `pets`, `walks`, `walk_pets`, `reviews`. The canonical schema lives in [`backend/src/main/resources/db/migration/`](./backend/src/main/resources/db/migration/) (Flyway migrations).
 
 ## Design Decisions
 
@@ -75,7 +75,15 @@ The full DDL script is available at [`/database/schema.sql`](./database/schema.s
 
 A single `USERS` table with a `role` field was chosen over separate tables (`OWNERS` and `WALKERS`) from the start, because both roles share the same core identity data — name, email, password, national ID — and the system has only two fixed, mutually exclusive roles, with no need for a user to hold multiple roles at once or for new roles to be added dynamically.
 
-This is a deliberate trade-off that avoids the complexity of a normalized roles table (`roles` plus a `user_roles` join table), which would only add value if the system required configurable or multiple roles per user, for this case outside the MVP's scope. 
+This is a deliberate trade-off that avoids the complexity of a normalized roles table (`roles` plus a `user_roles` join table), which would only add value if the system required configurable or multiple roles per user, for this case outside the MVP's scope.
+
+### Walker publishes, owner joins — no request/accept flow
+
+A walk is an offer the walker publishes (schedule, zone, meeting point, capacity, price per pet); owners pick from what's published instead of requesting a slot and waiting for a response. That single decision removes the need for a separate availability/schedule table: the set of published, non-past walks *is* the walker's availability. The only rule protecting a walker's calendar is that two of their own active walks can't overlap in time.
+
+### `walk_pets` is a business entity, not a join table
+
+Each row is a client's booking of one pet into a published walk: it carries its own `id`, a `status` that changes over time (`JOINED` / `CANCELLED`), and `joined_at`. It is mapped as its own JPA entity rather than a `@ManyToMany`, since a plain join table can't carry that state — and it's the natural place to hang a future payment record, since each client pays for their own booking.
 
 ## Installation and Setup
 
@@ -97,12 +105,13 @@ Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `J
 ## Repository Structure
 
 ```
-walkingpet/
-├── backend/          # REST API — Java + Spring Boot
+trabajo-practico-integrador/
+├── backend/                          # REST API — Java + Spring Boot
+│   └── src/main/resources/db/migration/  # Flyway migrations — canonical schema
+├── frontend/                         # Web app — TypeScript + React
 ├── docs/
-│   └── er-diagram.png
-├── frontend/         # Web app — TypeScript + React
-├── Propuesta TP FINAL .pdf
+│   └── er-diagram.png                # Entity-relationship diagram
+├── Propuesta TP FINAL .pdf           # Original project proposal (1st Delivery)
 └── README.md
 ```
 
