@@ -99,11 +99,10 @@ Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `J
 ```
 walkingpet/
 ├── backend/          # REST API — Java + Spring Boot
-├── frontend/         # Web app — TypeScript + React
-├── database/
-│   └── schema.sql    # DDL script — PostgreSQL
 ├── docs/
-│   └── proposal.md   # Project proposal (1st Delivery)
+│   └── er-diagram.png
+├── frontend/         # Web app — TypeScript + React
+├── Propuesta TP FINAL .pdf
 └── README.md
 ```
 
