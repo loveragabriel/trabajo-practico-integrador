@@ -1,6 +1,10 @@
 # build output
 target/
 
+# local secrets, never commit
+.env
+.env.local
+
 # IDE
 .idea/
 *.iml
