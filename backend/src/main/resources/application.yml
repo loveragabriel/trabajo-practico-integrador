@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: paseadores
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    # schema is managed by hand via database/ scripts, not auto-generated
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
