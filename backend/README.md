@@ -38,6 +38,16 @@ Port `5433` is used instead of the default `5432` to avoid clashing with other l
 
 Flyway runs automatically on startup — it applies `src/main/resources/db/migration/` (schema + zones catalog) against whatever database `DB_URL` points to. No manual migration step needed.
 
+## Authentication
+
+All endpoints require `Authorization: Bearer <token>` except `/api/auth/**` (not implemented yet — see the `auth` module). No token or an invalid one returns 403.
+
+## Tests
+
+```bash
+./mvnw test
+```
+
 ## Notes
 
 - Schema source of truth: `database/` at the repo root. Migrations here mirror it.
