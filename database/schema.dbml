@@ -1,0 +1,127 @@
+// DBML source for the ER diagram (dbdiagram.io)
+// Mirrors database/01_schema.sql
+
+Enum user_role {
+  OWNER
+  WALKER
+}
+
+Enum pet_size {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+Enum walk_status {
+  PUBLISHED
+  COMPLETED
+  CANCELLED
+}
+
+Enum booking_status {
+  JOINED
+  CANCELLED
+}
+
+Table zones {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(100) [not null]
+  city varchar(100) [not null, default: 'Buenos Aires']
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (name, city) [unique]
+  }
+}
+
+// single table, two fixed roles
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  full_name varchar(150) [not null]
+  email varchar(150) [not null, unique]
+  password_hash varchar(255) [not null]
+  phone varchar(30)
+  role user_role [not null]
+  zone_id uuid [not null]
+  is_active boolean [not null, default: true]
+  default_price decimal(10,2)
+  default_capacity int
+  rating_avg decimal(2,1) [not null, default: 0]
+  review_count int [not null, default: 0]
+  created_at timestamp [not null, default: `now()`]
+}
+
+// walker coverage, role checked in service layer
+Table walker_zones {
+  walker_id uuid [not null]
+  zone_id uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (walker_id, zone_id) [pk]
+  }
+}
+
+Table pets {
+  id uuid [pk, default: `gen_random_uuid()`]
+  owner_id uuid [not null]
+  name varchar(100) [not null]
+  breed varchar(100)
+  size pet_size
+  notes text
+  created_at timestamp [not null, default: `now()`]
+}
+
+// group walk published by a walker
+Table walks {
+  id uuid [pk, default: `gen_random_uuid()`]
+  walker_id uuid [not null]
+  zone_id uuid [not null]
+  start_time timestamp [not null]
+  duration_minutes int [not null]
+  end_time timestamp [not null, note: 'generated: start_time + duration_minutes']
+  capacity int [not null]
+  price_per_pet decimal(10,2) [not null]
+  meeting_point text [not null]
+  status walk_status [not null, default: 'PUBLISHED']
+  created_at timestamp [not null, default: `now()`]
+}
+
+// booking is its own entity, not a plain join table
+Table walk_pets {
+  id uuid [pk, default: `gen_random_uuid()`]
+  walk_id uuid [not null]
+  pet_id uuid [not null]
+  status booking_status [not null, default: 'JOINED']
+  joined_at timestamp [not null, default: `now()`]
+  notes text
+
+  indexes {
+    (walk_id, pet_id) [unique]
+  }
+}
+
+// one review per owner per walk
+Table reviews {
+  id uuid [pk, default: `gen_random_uuid()`]
+  walk_id uuid [not null]
+  author_id uuid [not null]
+  rating smallint [not null]
+  comment text
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (walk_id, author_id) [unique]
+  }
+}
+
+Ref: users.zone_id > zones.id
+Ref: walker_zones.walker_id > users.id
+Ref: walker_zones.zone_id > zones.id
+Ref: pets.owner_id > users.id
+Ref: walks.walker_id > users.id
+Ref: walks.zone_id > zones.id
+Ref: walk_pets.walk_id > walks.id
+Ref: walk_pets.pet_id > pets.id
+Ref: reviews.walk_id > walks.id
+Ref: reviews.author_id > users.id
