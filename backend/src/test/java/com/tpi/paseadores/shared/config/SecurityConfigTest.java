@@ -10,6 +10,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = PingTestController.class)
@@ -25,8 +26,11 @@ class SecurityConfigTest {
 
     @Test
     void rejectsRequestWithoutToken() throws Exception {
+        // no authentication at all -> 401, with the same ApiError shape as the rest of the API
         mockMvc.perform(get("/api/ping"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("Missing or invalid token"));
     }
 
     @Test
