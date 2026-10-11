@@ -1,18 +1,24 @@
 # Módulos a desarrollar y responsabilidades
 
 
-| Módulo | Backend planificado | Frontend planificado | Datos principales | Funcionalidades y responsabilidad |
+Los nombres de paquete y de carpeta están en inglés, igual que el código. Cada módulo funcional
+se ubica en el paquete del backend (`com.tpi.paseadores.<paquete>`) y en la carpeta del frontend
+(`frontend/src/<carpeta>`) indicados en la tabla. Algunos módulos funcionales comparten paquete
+porque operan sobre las mismas entidades: la cobertura del paseador vive en `user`, y las
+reservas y la búsqueda viven en `walk` junto con los paseos.
+
+| Módulo | Paquete backend | Carpeta frontend | Datos principales | Funcionalidades y responsabilidad |
 | --- | --- | --- | --- | --- |
 | Autenticación | `auth` | `features/auth` | `users` | Registro de dueño/paseador, login, hash de contraseñas, emisión y validación JWT, acceso según rol. |
-| Usuarios y perfiles | `usuario` | `features/profile` | `users`, `zones` | Consultar/editar perfil propio, barrio de referencia y contacto, consultar usuario activo. |
-| Paseadores y cobertura | `paseador` | `features/profile`, `features/map` | `users`, `walker_zones`, `zones` | Publicar perfil de paseador, tarifa/cupo orientativos y zonas de cobertura; consulta pública sin datos privados. |
-| Mascotas | `mascota` | `features/pets` | `pets`, `users` | Alta, consulta y edición de mascotas propias; tamaño, raza y observaciones para el paseo. |
-| Zonas y mapa | `zona` | `features/map` | `zones`, `walker_zones` | Catálogo de barrios, filtros y visualización orientativa de cobertura; sin editor de polígonos ni GPS. |
-| Paseos y agenda | `paseo` | `features/walks`, `pages` | `walks`, `users`, `zones` | Publicar/consultar paseos grupales, cancelar o marcar completado; agenda e historial por rol. |
-| Reservas por mascota | `reserva` | `features/walks` | `walk_pets`, `pets`, `walks` | Incorporar mascotas propias a un paseo, controlar cupo, cancelar/reactivar una reserva; sin aceptación por paseador. |
-| Búsqueda de paseos | `matching` | `features/walker-search` | `walks`, `walk_pets`, `zones`, `users` | Filtrar paseos publicados y futuros por zona/horario; devolver información del paseador y cupo restante. |
-| Reseñas | `resena` | `features/reviews`, `features/profile` | `reviews`, `walks`, `walk_pets`, `pets`, `users` | Calificar un paseo completado, mostrar reseñas y actualizar promedio/cantidad del paseador. |
-| Componentes transversales | `shared` | `shared` | Sin tabla propia | Configuración, validaciones comunes, errores de API, componentes UI, cliente HTTP y tipos. |
+| Usuarios y perfiles | `user` | `features/profile` | `users`, `zones` | Consultar/editar perfil propio, barrio de referencia y contacto, consultar usuario activo. |
+| Paseadores y cobertura | `user` | `features/profile`, `features/map` | `users`, `walker_zones`, `zones` | Publicar perfil de paseador, tarifa/cupo orientativos y zonas de cobertura; consulta pública sin datos privados. |
+| Mascotas | `pet` | `features/pets` | `pets`, `users` | Alta, consulta y edición de mascotas propias; tamaño, raza y observaciones para el paseo. |
+| Zonas y mapa | `zone` | `features/map` | `zones`, `walker_zones` | Catálogo de barrios, filtros y visualización orientativa de cobertura; sin editor de polígonos ni GPS. |
+| Paseos y agenda | `walk` | `features/walks`, `pages` | `walks`, `users`, `zones` | Publicar/consultar paseos grupales, cancelar o marcar completado; agenda e historial por rol. |
+| Reservas por mascota | `walk` | `features/walks` | `walk_pets`, `pets`, `walks` | Incorporar mascotas propias a un paseo, controlar cupo, cancelar/reactivar una reserva; sin aceptación por paseador. |
+| Búsqueda de paseos | `walk` | `features/walks` | `walks`, `walk_pets`, `zones`, `users` | Filtrar paseos publicados y futuros por zona/horario; devolver información del paseador y cupo restante. |
+| Reseñas | `review` | `features/reviews`, `features/profile` | `reviews`, `walks`, `walk_pets`, `pets`, `users` | Calificar un paseo completado, mostrar reseñas y actualizar promedio/cantidad del paseador. |
+| Componentes transversales | `shared` | `shared` | Sin tabla propia | Configuración, seguridad, validaciones comunes, errores de API, componentes UI, cliente HTTP y tipos. |
 
 ## Casos de uso y límites por módulo
 

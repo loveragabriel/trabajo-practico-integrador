@@ -16,6 +16,7 @@ A web application that connects pet owners with dog walkers in the City of Bueno
 - [MVP Scope](#mvp-scope)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
+- [Modules](#modules)
 - [Data Model](#data-model)
 - [Design Decisions](#design-decisions)
 - [Installation and Setup](#installation-and-setup)
@@ -63,11 +64,28 @@ This project is looking for replacing that informal coordination with a centrali
 
 A layered monolithic architecture (controller → service → repository) built with Spring Boot. A microservices architecture is out of the scope because the project's domain (owners, walkers, walks, zones) has no modules with independent lifecycles or teams that would justify that operational complexity; a layered monolith is achievable within the course timeline and avoids over-engineering.
 
+## Modules
+
+Full detail — features, responsibilities, dependencies and acceptance criteria per module — in [`docs/modulos.md`](docs/modulos.md).
+
+| Module | Backend package | Frontend folder | Responsibility |
+|---|---|---|---|
+| Authentication | `auth` | `features/auth` | Registration, login, password hashing, JWT issuing and validation, role-based access |
+| Users and profiles | `user` | `features/profile` | Own profile, home zone and contact data, logical deactivation |
+| Walkers and coverage | `user` | `features/profile`, `features/map` | Walker service zones (`walker_zones`), default price and capacity, public walker profile |
+| Pets | `pet` | `features/pets` | Create, list and edit the owner's own pets |
+| Zones and map | `zone` | `features/map` | Neighborhood catalog and coverage map |
+| Walks and schedule | `walk` | `features/walks` | Publish group walks, overlap check, cancel/complete, walk history per role |
+| Bookings | `walk` | `features/walks` | Join a pet to a published walk, capacity control with pessimistic lock, cancel/re-join |
+| Walk search | `walk` | `features/walks` | List published future walks by zone with remaining spots |
+| Reviews | `review` | `features/reviews` | Rate completed walks, update walker rating average and count |
+| Cross-cutting | `shared` | `shared` | Configuration, security, validation, error handling, HTTP client, UI components |
+
 ## Data Model
 
 ![Diagrama entidad-relación](docs/er-diagram.png)
 
-Seven tables: `zones`, `users`, `walker_zones`, `pets`, `walks`, `walk_pets`, `reviews`. The canonical schema lives in [`backend/src/main/resources/db/migration/`](./backend/src/main/resources/db/migration/) (Flyway migrations).
+Seven tables: `zones`, `users`, `walker_zones`, `pets`, `walks`, `walk_pets`, `reviews`. The SQL scripts live in [`database/`](./database/): DDL ([`01_schema.sql`](database/01_schema.sql)), seed data ([`02_seed.sql`](database/02_seed.sql)) and integrity checks ([`03_verify.sql`](database/03_verify.sql)), with instructions in [`database/README.md`](database/README.md). The backend applies the same schema automatically through Flyway migrations in [`backend/src/main/resources/db/migration/`](./backend/src/main/resources/db/migration/). Data model details in [`docs/modelo-datos.md`](docs/modelo-datos.md).
 
 ## Design Decisions
 
@@ -106,12 +124,24 @@ Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `J
 
 ```
 trabajo-practico-integrador/
-├── backend/                          # REST API — Java + Spring Boot
-│   └── src/main/resources/db/migration/  # Flyway migrations — canonical schema
-├── frontend/                         # Web app — TypeScript + React
-├── docs/
-│   └── er-diagram.png                # Entity-relationship diagram
-├── Propuesta TP FINAL .pdf           # Original project proposal (1st Delivery)
+├── backend/                  # REST API — Java + Spring Boot (see backend/README.md)
+│   └── src/main/
+│       ├── java/com/tpi/paseadores/   # one package per module: auth, user, pet, zone, walk, review, shared
+│       └── resources/db/migration/    # Flyway migrations applied on startup
+├── frontend/                 # Web app — TypeScript + React (see frontend/README.md)
+│   └── src/                  # app, pages, features/<module>, shared
+├── database/                 # SQL scripts (see database/README.md)
+│   ├── 01_schema.sql         # DDL: enums, tables, constraints, indexes
+│   ├── 02_seed.sql           # Initial zones catalog
+│   ├── 03_verify.sql         # Integrity checks
+│   └── schema.dbml           # Editable schema (dbdiagram.io)
+├── docs/                     # Project documentation
+│   ├── propuesta.md          # Project proposal
+│   ├── arquitectura.md       # Architecture
+│   ├── modelo-datos.md       # Data model and integrity rules
+│   ├── modulos.md            # Modules, features and responsibilities
+│   ├── entrega-2.md          # 2nd delivery corrections and traceability
+│   └── er-diagram.png        # Entity-relationship diagram
 └── README.md
 ```
 
@@ -121,5 +151,5 @@ trabajo-practico-integrador/
 |---|---|---|
 | 1st Delivery — Proposal + Repository | 08/30/2026 | ✅ |
 | 2nd Delivery — DB design and modules | 09/27/2026 | 🔄 In progress |
-| Final Delivery — Report, video, and deployment | 11/14/2026 | ⏳ Pending |
+| Final Delivery — Report, video, and deployment | 11/11/2026 | ⏳ Pending |
 | Oral Defense | Exam board | ⏳ Pending |
