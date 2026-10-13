@@ -6,7 +6,7 @@ El frontend (React + TypeScript con Vite y Tailwind CSS) consume una API REST Sp
 
 | Componente/capa | Responsabilidad |
 | --- | --- |
-| React | Páginas, formularios, navegación, agenda y mapa. Consume DTOs de la API. |
+| React | Páginas, formularios, navegación, agenda y mapa. Consume DTOs de la API. Organizado por feature (ver abajo). |
 | Controller | Recibe HTTP, valida formato de entrada y devuelve respuestas. |
 | Service | Ejecuta casos de uso, autoriza operaciones y coordina transacciones. |
 | Repository | Consulta y persiste entidades con Spring Data JPA. |
@@ -14,6 +14,22 @@ El frontend (React + TypeScript con Vite y Tailwind CSS) consume una API REST Sp
 | Shared | Manejo uniforme de errores, configuración y validaciones comunes. |
 
 No se incluyen microservicios: el dominio acotado y el plazo favorecen una sola API.
+
+### Organización del frontend
+
+El frontend se organiza por feature, en espejo con los módulos del backend:
+
+| Carpeta | Contenido |
+| --- | --- |
+| `app/` | Arranque de la aplicación: router, providers, layout, rutas (`paths.ts`), inicio y 404. |
+| `features/<módulo>/` | Todo lo de un módulo: `pages/` (pantallas de sus rutas), componentes, llamadas a la API y hooks. |
+| `shared/` | Código sin lógica de negocio: cliente HTTP, componentes de UI genéricos, tipos y utilidades. |
+
+Reglas de dependencia: una feature puede usar `shared/`. Desde fuera de una feature solo se importa
+lo que expone su `index.ts` (su API pública); por ejemplo, la sesión se usa con
+`import { useAuth } from '@/features/auth'`, sin conocer cómo está organizada por dentro.
+`app/router.tsx` es el único lugar que importa páginas directamente, para armar el ruteo. Los
+imports usan el alias `@/` (`src/`).
 
 ## Decisiones
 

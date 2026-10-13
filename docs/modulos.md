@@ -7,6 +7,12 @@ se ubica en el paquete del backend (`com.tpi.paseadores.<paquete>`) y en la carp
 porque operan sobre las mismas entidades: la cobertura del paseador vive en `user`, y las
 reservas y la búsqueda viven en `walk` junto con los paseos.
 
+En el frontend cada carpeta `features/<módulo>` contiene todo lo de ese módulo: sus páginas
+(`pages/`), componentes, llamadas a la API y hooks. Las reservas tienen carpeta propia
+(`features/bookings`) para la agenda del cliente, aunque en el backend compartan el paquete `walk`.
+Lo que no pertenece a un módulo va en `app` (ruteo, layout, inicio y 404) o en `shared`
+(código sin lógica de negocio).
+
 | Módulo | Paquete backend | Carpeta frontend | Datos principales | Funcionalidades y responsabilidad |
 | --- | --- | --- | --- | --- |
 | Autenticación | `auth` | `features/auth` | `users` | Registro de dueño/paseador, login, hash de contraseñas, emisión y validación JWT, acceso según rol. |
@@ -14,11 +20,11 @@ reservas y la búsqueda viven en `walk` junto con los paseos.
 | Paseadores y cobertura | `user` | `features/profile`, `features/map` | `users`, `walker_zones`, `zones` | Publicar perfil de paseador, tarifa/cupo orientativos y zonas de cobertura; consulta pública sin datos privados. |
 | Mascotas | `pet` | `features/pets` | `pets`, `users` | Alta, consulta y edición de mascotas propias; tamaño, raza y observaciones para el paseo. |
 | Zonas y mapa | `zone` | `features/map` | `zones`, `walker_zones` | Catálogo de barrios, filtros y visualización orientativa de cobertura; sin editor de polígonos ni GPS. |
-| Paseos y agenda | `walk` | `features/walks`, `pages` | `walks`, `users`, `zones` | Publicar/consultar paseos grupales, cancelar o marcar completado; agenda e historial por rol. |
-| Reservas por mascota | `walk` | `features/walks` | `walk_pets`, `pets`, `walks` | Incorporar mascotas propias a un paseo, controlar cupo, cancelar/reactivar una reserva; sin aceptación por paseador. |
+| Paseos y agenda | `walk` | `features/walks` | `walks`, `users`, `zones` | Publicar/consultar paseos grupales, cancelar o marcar completado; agenda e historial por rol. |
+| Reservas por mascota | `walk` | `features/walks`, `features/bookings` | `walk_pets`, `pets`, `walks` | Incorporar mascotas propias a un paseo, controlar cupo, cancelar/reactivar una reserva; sin aceptación por paseador. |
 | Búsqueda de paseos | `walk` | `features/walks` | `walks`, `walk_pets`, `zones`, `users` | Filtrar paseos publicados y futuros por zona/horario; devolver información del paseador y cupo restante. |
 | Reseñas | `review` | `features/reviews`, `features/profile` | `reviews`, `walks`, `walk_pets`, `pets`, `users` | Calificar un paseo completado, mostrar reseñas y actualizar promedio/cantidad del paseador. |
-| Componentes transversales | `shared` | `shared` | Sin tabla propia | Configuración, seguridad, validaciones comunes, errores de API, componentes UI, cliente HTTP y tipos. |
+| Componentes transversales | `shared` | `app`, `shared` | Sin tabla propia | Ruteo y layout (`app`); configuración, seguridad, validaciones comunes, errores de API, componentes UI, cliente HTTP y tipos. |
 
 ## Casos de uso y límites por módulo
 

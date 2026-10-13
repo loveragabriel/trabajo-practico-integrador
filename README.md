@@ -64,6 +64,8 @@ This project is looking for replacing that informal coordination with a centrali
 
 A layered monolithic architecture (controller → service → repository) built with Spring Boot. A microservices architecture is out of the scope because the project's domain (owners, walkers, walks, zones) has no modules with independent lifecycles or teams that would justify that operational complexity; a layered monolith is achievable within the course timeline and avoids over-engineering.
 
+The frontend is organized by feature: each backend module has a matching `frontend/src/features/<module>/` folder that holds everything for that module (pages, components, API calls, hooks). `app/` wires the application together (router, providers, layout) and `shared/` holds business-agnostic code. Details in [`frontend/README.md`](frontend/README.md).
+
 ## Modules
 
 Full detail — features, responsibilities, dependencies and acceptance criteria per module — in [`docs/modulos.md`](docs/modulos.md).
@@ -76,10 +78,10 @@ Full detail — features, responsibilities, dependencies and acceptance criteria
 | Pets | `pet` | `features/pets` | Create, list and edit the owner's own pets |
 | Zones and map | `zone` | `features/map` | Neighborhood catalog and coverage map |
 | Walks and schedule | `walk` | `features/walks` | Publish group walks, overlap check, cancel/complete, walk history per role |
-| Bookings | `walk` | `features/walks` | Join a pet to a published walk, capacity control with pessimistic lock, cancel/re-join |
+| Bookings | `walk` | `features/walks`, `features/bookings` | Join a pet to a published walk, capacity control with pessimistic lock, cancel/re-join |
 | Walk search | `walk` | `features/walks` | List published future walks by zone with remaining spots |
 | Reviews | `review` | `features/reviews` | Rate completed walks, update walker rating average and count |
-| Cross-cutting | `shared` | `shared` | Configuration, security, validation, error handling, HTTP client, UI components |
+| Cross-cutting | `shared` | `app`, `shared` | Routing and layout (`app`); configuration, security, validation, error handling, HTTP client, UI components |
 
 ## Data Model
 
@@ -131,7 +133,10 @@ trabajo-practico-integrador/
 │       ├── java/com/tpi/paseadores/   # one package per module: auth, user, pet, zone, walk, review, shared
 │       └── resources/db/migration/    # Flyway migrations applied on startup
 ├── frontend/                 # Web app — TypeScript + React + Vite + Tailwind CSS, pnpm (see frontend/README.md)
-│   └── src/                  # app, pages, features/<module>, shared
+│   └── src/
+│       ├── app/              # router, providers, layout, home and 404 pages
+│       ├── features/<module>/ # everything of one module: pages, components, api, hooks
+│       └── shared/           # business-agnostic code: HTTP client, UI components, types
 ├── database/                 # SQL scripts (see database/README.md)
 │   ├── 01_schema.sql         # DDL: enums, tables, constraints, indexes
 │   ├── 02_seed.sql           # Initial zones catalog
