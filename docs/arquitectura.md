@@ -2,7 +2,7 @@
 
 ## Organización
 
-El frontend React consume una API REST Spring Boot. El backend utiliza un monolito por capas y PostgreSQL. Dentro del backend, los paquetes se organizan por dominio y cada módulo separa controlador, servicio, repositorio, entidad y DTO cuando corresponda.
+El frontend (React + TypeScript con Vite y Tailwind CSS) consume una API REST Spring Boot. El backend utiliza un monolito por capas y PostgreSQL. Dentro del backend, los paquetes se organizan por dominio y cada módulo separa controlador, servicio, repositorio, entidad y DTO cuando corresponda.
 
 | Componente/capa | Responsabilidad |
 | --- | --- |

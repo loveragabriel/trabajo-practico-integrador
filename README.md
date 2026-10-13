@@ -51,7 +51,7 @@ This project is looking for replacing that informal coordination with a centrali
 
 | Layer | Technology |
 |---|---|
-| Frontend | TypeScript + React |
+| Frontend | TypeScript + React (Vite) + Tailwind CSS, pnpm |
 | Backend | Java + Spring Boot |
 | Database | PostgreSQL |
 | Map | Leaflet + OpenStreetMap |
@@ -112,13 +112,15 @@ Each row is a client's booking of one pet into a published walk: it carries its 
 cd backend
 ./mvnw spring-boot:run
 
-# Frontend
+# Frontend (requires Node.js and pnpm)
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev        # http://localhost:5173
 ```
 
 Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
+
+In development, the Vite dev server proxies `/api` requests to the backend at `http://localhost:8080`.
 
 ## Repository Structure
 
@@ -128,7 +130,7 @@ trabajo-practico-integrador/
 │   └── src/main/
 │       ├── java/com/tpi/paseadores/   # one package per module: auth, user, pet, zone, walk, review, shared
 │       └── resources/db/migration/    # Flyway migrations applied on startup
-├── frontend/                 # Web app — TypeScript + React (see frontend/README.md)
+├── frontend/                 # Web app — TypeScript + React + Vite + Tailwind CSS, pnpm (see frontend/README.md)
 │   └── src/                  # app, pages, features/<module>, shared
 ├── database/                 # SQL scripts (see database/README.md)
 │   ├── 01_schema.sql         # DDL: enums, tables, constraints, indexes

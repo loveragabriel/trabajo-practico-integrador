@@ -37,7 +37,7 @@ El objetivo académico es desarrollar una solución acotada, con persistencia re
 
 | Capa | Tecnología planificada |
 | --- | --- |
-| Interfaz | React + TypeScript |
+| Interfaz | React + TypeScript (Vite) + Tailwind CSS, con pnpm |
 | API REST | Java + Spring Boot |
 | Persistencia | PostgreSQL + Spring Data JPA |
 | Autenticación | Spring Security + JWT |
