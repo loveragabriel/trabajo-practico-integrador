@@ -32,11 +32,12 @@ class ZoneControllerTest {
     @MockBean
     private ZoneService service;
 
+    // GET /api/zones is intentionally public: registration needs the catalog before a token exists
     @Test
-    void preservesExistingAuthenticationRequirement() throws Exception {
-        mvc.perform(get("/api/zones")).andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(401));
-        verifyNoInteractions(service);
+    void catalogIsPubliclyReadableWithoutAToken() throws Exception {
+        when(service.findAll()).thenReturn(List.of(new ZoneResponse(UUID.randomUUID(), "Palermo", "Buenos Aires")));
+        mvc.perform(get("/api/zones")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Palermo"));
     }
 
     @Test
@@ -91,11 +92,12 @@ class ZoneControllerTest {
         verifyNoInteractions(service);
     }
 
+    // the route is public either way, so a garbage token must not break it
     @Test
-    void invalidTokenCannotAccessCatalog() throws Exception {
+    void anInvalidTokenDoesNotBlockThePublicCatalog() throws Exception {
+        when(service.findAll()).thenReturn(List.of());
         mvc.perform(get("/api/zones").header("Authorization", "Bearer invalid"))
-                .andExpect(status().isUnauthorized());
-        verifyNoInteractions(service);
+                .andExpect(status().isOk());
     }
 
     private String token(String role) {
