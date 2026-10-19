@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,6 +39,8 @@ public class SecurityConfig {
                 // /error must stay open: an unmapped path forwards here, and without this
                 // a genuine 404 gets masked as 403 by the auth check below
                 .requestMatchers("/api/auth/**", "/error").permitAll()
+                // read-only catalog, no sensitive data: registration needs it before a token exists
+                .requestMatchers(HttpMethod.GET, "/api/zones/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e
