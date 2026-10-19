@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { register } from '@/features/auth/api/auth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { ZoneSelect, useZones } from '@/features/map'
+import { ZoneSelect } from '@/features/map'
+import { usePublicZones } from '@/features/auth/hooks/usePublicZones'
 import { ApiRequestError } from '@/shared/api/client'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ROLE_LABELS, type Role } from '@/shared/types/user'
@@ -16,9 +17,7 @@ export function RegisterPage() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
-  // sin sesión todavía: el catálogo de zonas pide autenticación, así que este selector
-  // va a quedar vacío hasta que el equipo decida abrir GET /api/zones sin token
-  const { zones } = useZones(null)
+  const { zones } = usePublicZones()
 
   const fullNameId = useId()
   const emailId = useId()
@@ -55,6 +54,7 @@ export function RegisterPage() {
         defaultCapacity: role === 'WALKER' && defaultCapacity ? Number(defaultCapacity) : undefined,
       })
       signIn(session)
+      // TODO: mostrar un modal de bienvenida acá antes de navegar ("Cuenta creada, ya podés gestionar tus paseos")
       navigate(paths.home, { replace: true })
     } catch (err) {
       // el mensaje del backend queda en inglés para logs/debug; acá siempre mostramos español
