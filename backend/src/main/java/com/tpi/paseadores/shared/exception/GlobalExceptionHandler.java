@@ -50,6 +50,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", request, null);
     }
 
+    // new handlers go here, at the end: keeps inserts as pure appends, out of the way of merges
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, null);
+    }
+
     private ResponseEntity<ApiError> build(HttpStatus status, String message, HttpServletRequest request,
                                             List<ApiError.FieldError> fieldErrors) {
         ApiError body = new ApiError(Instant.now(), status.value(), status.getReasonPhrase(), message,

@@ -38,6 +38,8 @@ public class SecurityConfig {
                 // /error must stay open: an unmapped path forwards here, and without this
                 // a genuine 404 gets masked as 403 by the auth check below
                 .requestMatchers("/api/auth/**", "/error").permitAll()
+                // API docs: read-only descriptions of the endpoints, not the data itself
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e
