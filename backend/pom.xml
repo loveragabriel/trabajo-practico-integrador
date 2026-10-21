@@ -119,6 +119,24 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- spring-boot:run builds up to test-compile, so checking the architecture rules in that
+                 phase stops the app from starting when one is broken, not only `./mvnw test` -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>architecture-rules</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <test>ArchitectureTest</test>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

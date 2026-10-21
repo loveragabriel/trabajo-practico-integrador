@@ -62,6 +62,8 @@ Code is organized by feature (`auth`, `user`, `zone`, `pet`, `walk`, `review`), 
 
 To check only these rules: `./mvnw test -Dtest=ArchitectureTest`.
 
+The rules also run before the app starts: `./mvnw spring-boot:run` stops with `BUILD FAILURE` if one is broken. Starting the app from the IDE's Run button skips this check (the IDE doesn't go through Maven), so CI still has the final word.
+
 ## Notes
 
 - Schema source of truth: `database/` at the repo root. Migrations here mirror it.
