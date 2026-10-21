@@ -9,9 +9,9 @@ import com.tpi.paseadores.shared.exception.InvalidCredentialsException;
 import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
 import com.tpi.paseadores.shared.security.JwtService;
 import com.tpi.paseadores.user.User;
-import com.tpi.paseadores.user.UserRepository;
 import com.tpi.paseadores.user.UserRole;
-import com.tpi.paseadores.zone.ZoneRepository;
+import com.tpi.paseadores.user.UserService;
+import com.tpi.paseadores.zone.ZoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepository userRepository;
-    private final ZoneRepository zoneRepository;
+    private final UserService userService;
+    private final ZoneService zoneService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -29,10 +29,10 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         UserRole role = UserRole.fromApiValue(request.role());
 
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
+        if (userService.existsByEmail(request.email())) {
             throw new BusinessRuleViolationException("Email already registered");
         }
-        if (zoneRepository.findById(request.zoneId()).isEmpty()) {
+        if (!zoneService.existsById(request.zoneId())) {
             throw new ResourceNotFoundException("Zone not found");
         }
 
@@ -48,13 +48,13 @@ public class AuthService {
             user.setDefaultCapacity(request.defaultCapacity());
         }
 
-        user = userRepository.save(user);
+        user = userService.create(user);
         return new AuthResponse(issueToken(user), UserSummary.from(user));
     }
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmailIgnoreCase(request.email())
+        User user = userService.findByEmail(request.email())
                 .filter(User::isActive)
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 

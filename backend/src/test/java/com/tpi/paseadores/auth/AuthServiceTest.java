@@ -8,10 +8,9 @@ import com.tpi.paseadores.shared.exception.InvalidCredentialsException;
 import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
 import com.tpi.paseadores.shared.security.JwtService;
 import com.tpi.paseadores.user.User;
-import com.tpi.paseadores.user.UserRepository;
 import com.tpi.paseadores.user.UserRole;
-import com.tpi.paseadores.zone.Zone;
-import com.tpi.paseadores.zone.ZoneRepository;
+import com.tpi.paseadores.user.UserService;
+import com.tpi.paseadores.zone.ZoneService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -36,9 +34,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
     @Mock
-    private ZoneRepository zoneRepository;
+    private ZoneService zoneService;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -50,7 +48,7 @@ class AuthServiceTest {
     void setUp() {
         // mocks are injected by MockitoExtension after construction, so the service
         // that wires them up has to be built here, not in a field initializer
-        service = new AuthService(userRepository, zoneRepository, passwordEncoder, jwtService);
+        service = new AuthService(userService, zoneService, passwordEncoder, jwtService);
     }
 
     @Test
@@ -59,10 +57,10 @@ class AuthServiceTest {
         var request = new RegisterRequest("Ana Dueña", "ana@example.com", "password123", null,
                 "CLIENT", zoneId, null, null);
 
-        when(userRepository.existsByEmailIgnoreCase("ana@example.com")).thenReturn(false);
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.of(mock(Zone.class)));
+        when(userService.existsByEmail("ana@example.com")).thenReturn(false);
+        when(zoneService.existsById(zoneId)).thenReturn(true);
         when(passwordEncoder.encode("password123")).thenReturn("hashed");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+        when(userService.create(any(User.class))).thenAnswer(invocation -> {
             User saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
             return saved;
@@ -76,7 +74,7 @@ class AuthServiceTest {
         assertThat(response.user().role()).isEqualTo("CLIENT");
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(captor.capture());
+        verify(userService).create(captor.capture());
         User saved = captor.getValue();
         assertThat(saved.getEmail()).isEqualTo("ana@example.com");
         assertThat(saved.getPasswordHash()).isEqualTo("hashed");
@@ -93,9 +91,9 @@ class AuthServiceTest {
         var request = new RegisterRequest("Beto Paseador", "beto@example.com", "password123", "+54 11 5555-5555",
                 "WALKER", zoneId, new BigDecimal("1500.00"), 4);
 
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.of(mock(Zone.class)));
+        when(zoneService.existsById(zoneId)).thenReturn(true);
         when(passwordEncoder.encode(any())).thenReturn("hashed");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+        when(userService.create(any(User.class))).thenAnswer(invocation -> {
             User saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
             return saved;
@@ -105,7 +103,7 @@ class AuthServiceTest {
         service.register(request);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(captor.capture());
+        verify(userService).create(captor.capture());
         User saved = captor.getValue();
         assertThat(saved.getRole()).isEqualTo(UserRole.WALKER);
         assertThat(saved.getDefaultPrice()).isEqualByComparingTo("1500.00");
@@ -116,12 +114,12 @@ class AuthServiceTest {
     void rejectsRegistrationWithADuplicateEmail() {
         var request = new RegisterRequest("Ana", "ana@example.com", "password123", null,
                 "CLIENT", UUID.randomUUID(), null, null);
-        when(userRepository.existsByEmailIgnoreCase("ana@example.com")).thenReturn(true);
+        when(userService.existsByEmail("ana@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> service.register(request))
                 .isInstanceOf(BusinessRuleViolationException.class)
                 .hasMessage("Email already registered");
-        verifyNoInteractions(zoneRepository, passwordEncoder, jwtService);
+        verifyNoInteractions(zoneService, passwordEncoder, jwtService);
     }
 
     @Test
@@ -129,8 +127,8 @@ class AuthServiceTest {
         UUID zoneId = UUID.randomUUID();
         var request = new RegisterRequest("Ana", "ana@example.com", "password123", null,
                 "CLIENT", zoneId, null, null);
-        when(userRepository.existsByEmailIgnoreCase("ana@example.com")).thenReturn(false);
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        when(userService.existsByEmail("ana@example.com")).thenReturn(false);
+        when(zoneService.existsById(zoneId)).thenReturn(false);
 
         assertThatThrownBy(() -> service.register(request))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -141,7 +139,7 @@ class AuthServiceTest {
     @Test
     void logsInWithCorrectCredentials() {
         User user = activeUser();
-        when(userRepository.findByEmailIgnoreCase("ana@example.com")).thenReturn(Optional.of(user));
+        when(userService.findByEmail("ana@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
         when(jwtService.generateToken(user.getId().toString(), "OWNER")).thenReturn("jwt-token");
 
@@ -153,7 +151,7 @@ class AuthServiceTest {
 
     @Test
     void rejectsLoginWithAnUnknownEmail() {
-        when(userRepository.findByEmailIgnoreCase("ghost@example.com")).thenReturn(Optional.empty());
+        when(userService.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.login(new LoginRequest("ghost@example.com", "whatever1")))
                 .isInstanceOf(InvalidCredentialsException.class)
@@ -164,7 +162,7 @@ class AuthServiceTest {
     @Test
     void rejectsLoginWithAWrongPassword() {
         User user = activeUser();
-        when(userRepository.findByEmailIgnoreCase("ana@example.com")).thenReturn(Optional.of(user));
+        when(userService.findByEmail("ana@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong-pass", "hashed")).thenReturn(false);
 
         assertThatThrownBy(() -> service.login(new LoginRequest("ana@example.com", "wrong-pass")))
@@ -177,7 +175,7 @@ class AuthServiceTest {
     void rejectsLoginForADeactivatedUser() {
         User user = activeUser();
         user.setActive(false);
-        when(userRepository.findByEmailIgnoreCase("ana@example.com")).thenReturn(Optional.of(user));
+        when(userService.findByEmail("ana@example.com")).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> service.login(new LoginRequest("ana@example.com", "password123")))
                 .isInstanceOf(InvalidCredentialsException.class)
