@@ -48,6 +48,20 @@ All endpoints require `Authorization: Bearer <token>` except `/api/auth/**` (not
 ./mvnw test
 ```
 
+Database integration tests (`*DatabaseIntegrationTest`) are skipped unless `TPI_DB_TESTS=true` is set and the database is running.
+
+## Architecture rules
+
+Code is organized by feature (`auth`, `user`, `zone`, `pet`, `walk`, `review`), with `shared` for cross-cutting code. `ArchitectureTest` enforces these rules on every `./mvnw test` and in CI, so breaking one fails the build:
+
+- A feature uses only its own repositories. To read or write another feature's data, call that feature's service (e.g. `AuthService` calls `ZoneService.existsById`, not `ZoneRepository`).
+- Controllers never use repositories or JPA entities: they call services and return DTOs.
+- Services know nothing about HTTP (`ResponseEntity`, `HttpServletRequest`, ...).
+- `shared` never depends on a feature.
+- No dependency cycles between features.
+
+To check only these rules: `./mvnw test -Dtest=ArchitectureTest`.
+
 ## Notes
 
 - Schema source of truth: `database/` at the repo root. Migrations here mirror it.
