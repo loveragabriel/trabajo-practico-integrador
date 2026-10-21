@@ -24,4 +24,8 @@ public class ZoneService {
         return repository.findById(id).map(ZoneResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("Zone not found"));
     }
+
+    public boolean existsById(UUID id) {
+        return repository.existsById(id);
+    }
 }

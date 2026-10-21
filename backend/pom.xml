@@ -96,6 +96,13 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- architecture rules checked as tests (see ArchitectureTest) -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.3.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -111,6 +118,24 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <!-- spring-boot:run builds up to test-compile, so checking the architecture rules in that
+                 phase stops the app from starting when one is broken, not only `./mvnw test` -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>architecture-rules</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <test>ArchitectureTest</test>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

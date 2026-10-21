@@ -61,4 +61,15 @@ class ZoneServiceTest {
         assertThatThrownBy(() -> service.findById(id))
                 .isInstanceOf(ResourceNotFoundException.class).hasMessage("Zone not found");
     }
+
+    @Test
+    void reportsWhetherAZoneExists() {
+        UUID known = UUID.randomUUID();
+        UUID unknown = UUID.randomUUID();
+        when(repository.existsById(known)).thenReturn(true);
+        when(repository.existsById(unknown)).thenReturn(false);
+
+        assertThat(service.existsById(known)).isTrue();
+        assertThat(service.existsById(unknown)).isFalse();
+    }
 }

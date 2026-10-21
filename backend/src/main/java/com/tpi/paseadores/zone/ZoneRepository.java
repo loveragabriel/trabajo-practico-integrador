@@ -10,4 +10,6 @@ public interface ZoneRepository extends Repository<Zone, UUID> {
     List<Zone> findAllByOrderByNameAsc();
 
     Optional<Zone> findById(UUID id);
+
+    boolean existsById(UUID id);
 }
