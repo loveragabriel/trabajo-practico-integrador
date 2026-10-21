@@ -1,5 +1,7 @@
 export { ZoneCatalog } from './components/ZoneCatalog'
 export { ZoneSelect } from './components/ZoneSelect'
+export { ZoneCoverageMap } from './components/ZoneCoverageMap'
+export { locateZone, normalizeZoneName } from './utils/zoneLocations'
 export { useZones } from './hooks/useZones'
 export { loadZones, ZoneRequestError } from './api/zones'
 export type { Zone } from './types'
