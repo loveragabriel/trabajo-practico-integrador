@@ -2,14 +2,13 @@ import { useZones } from '../hooks/useZones'
 import { ZoneSelect } from './ZoneSelect'
 
 interface ZoneCatalogProps {
-  token: string | null
+  token?: string | null
   value: string
   onChange: (zoneId: string) => void
   required?: boolean
 }
 
-/** Portable building block for profile, coverage, publication and walk filters. */
-export function ZoneCatalog({ token, value, onChange, required = false }: ZoneCatalogProps) {
+export function ZoneCatalog({ token = null, value, onChange, required = false }: ZoneCatalogProps) {
   const { zones, loading, error, needsAuthentication, reload } = useZones(token)
 
   if (needsAuthentication) {

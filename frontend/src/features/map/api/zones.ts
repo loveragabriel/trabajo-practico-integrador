@@ -19,12 +19,11 @@ function isZone(value: unknown): value is Zone {
     && typeof zone.city === 'string' && zone.city.trim().length > 0
 }
 
-/** Uses the existing Vite /api proxy; authentication remains owned by the auth module. */
-export async function loadZones(token: string, signal?: AbortSignal): Promise<Zone[]> {
-  if (!token.trim()) throw new ZoneRequestError('Ingresá para consultar los barrios.', 401)
-
+export async function loadZones(token?: string | null, signal?: AbortSignal): Promise<Zone[]> {
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (token?.trim()) headers.Authorization = `Bearer ${token}`
   const response = await fetch('/api/zones', {
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    headers,
     credentials: 'omit',
     signal,
   })
@@ -35,7 +34,6 @@ export async function loadZones(token: string, signal?: AbortSignal): Promise<Zo
       : response.status === 403
         ? 'No tenés permiso para consultar los barrios.'
         : 'No pudimos cargar los barrios. Intentá nuevamente.'
-    // Do not surface raw server responses or internal error details in the UI.
     throw new ZoneRequestError(message, response.status)
   }
 

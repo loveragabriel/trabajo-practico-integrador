@@ -12,17 +12,15 @@ interface CatalogState {
 }
 
 const idle: CatalogState = {
-  token: null, attempt: 0, zones: [], loading: false, error: null, needsAuthentication: true,
+  token: null, attempt: -1, zones: [], loading: true, error: null, needsAuthentication: false,
 }
 
-export function useZones(token: string | null) {
+export function useZones(token: string | null = null) {
   const [state, setState] = useState<CatalogState>(idle)
   const [attempt, setAttempt] = useState(0)
   const reload = useCallback(() => setAttempt((value) => value + 1), [])
 
   useEffect(() => {
-    if (!token) return
-
     const controller = new AbortController()
     let active = true
 
@@ -43,8 +41,8 @@ export function useZones(token: string | null) {
     }
   }, [token, attempt])
 
-  // Never expose a previous account's result while an effect for a new token starts.
-  const current = !token ? idle : state.token === token && state.attempt === attempt ? state : {
+  // Al cambiar la consulta esperamos su respuesta, sin mostrar un resultado anterior.
+  const current = state.token === token && state.attempt === attempt ? state : {
     ...idle, token, attempt, loading: true, needsAuthentication: false,
   }
   return {

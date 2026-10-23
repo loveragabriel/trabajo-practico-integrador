@@ -11,7 +11,6 @@ interface ZoneSelectProps {
   name?: string
 }
 
-/** Controlled selector: IDs always come from the API, never a second static catalog. */
 export function ZoneSelect({
   zones, value, onChange, label = 'Barrio', disabled = false, required = false, name = 'zoneId',
 }: ZoneSelectProps) {

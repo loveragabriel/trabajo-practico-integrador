@@ -20,9 +20,13 @@ test('requests the real endpoint with the supplied JWT and returns a sorted mini
   assert.equal(calls, 1)
 })
 
-test('never requests the endpoint without a token', async () => {
-  globalThis.fetch = async () => { throw new Error('Must not request') }
-  await assert.rejects(loadZones('  '), (error: unknown) => error instanceof ZoneRequestError && error.status === 401)
+test('permite consultar el catálogo público sin enviar un token vacío', async () => {
+  globalThis.fetch = async (_url, options) => {
+    assert.deepEqual(options?.headers, { Accept: 'application/json' })
+    return Response.json([palermo])
+  }
+  assert.deepEqual(await loadZones(), [palermo])
+  assert.deepEqual(await loadZones('  '), [palermo])
 })
 
 test('handles an empty catalog without creating fake neighborhoods', async () => {
