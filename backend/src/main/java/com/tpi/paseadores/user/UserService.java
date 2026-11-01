@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 // public API of the user feature: other features go through here, never through UserRepository
 @Service
@@ -20,6 +21,11 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findById(UUID id) {
+        return userRepository.findById(id);
     }
 
     @Transactional
