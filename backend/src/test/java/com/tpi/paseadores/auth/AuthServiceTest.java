@@ -65,7 +65,7 @@ class AuthServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
-        when(jwtService.generateToken(any(), eq("OWNER"))).thenReturn("jwt-token");
+        when(jwtService.generateToken(any(), eq("CLIENT"))).thenReturn("jwt-token");
 
         AuthResponse response = service.register(request);
 
@@ -78,7 +78,7 @@ class AuthServiceTest {
         User saved = captor.getValue();
         assertThat(saved.getEmail()).isEqualTo("ana@example.com");
         assertThat(saved.getPasswordHash()).isEqualTo("hashed");
-        assertThat(saved.getRole()).isEqualTo(UserRole.OWNER);
+        assertThat(saved.getRole()).isEqualTo(UserRole.CLIENT);
         assertThat(saved.getZoneId()).isEqualTo(zoneId);
         // an owner never carries walker-only defaults (RN-04 / ck_users_owner_has_no_walker_defaults)
         assertThat(saved.getDefaultPrice()).isNull();
@@ -141,7 +141,7 @@ class AuthServiceTest {
         User user = activeUser();
         when(userService.findByEmail("ana@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(user.getId().toString(), "OWNER")).thenReturn("jwt-token");
+        when(jwtService.generateToken(user.getId().toString(), "CLIENT")).thenReturn("jwt-token");
 
         AuthResponse response = service.login(new LoginRequest("ana@example.com", "password123"));
 
@@ -189,7 +189,7 @@ class AuthServiceTest {
         user.setFullName("Ana Dueña");
         user.setEmail("ana@example.com");
         user.setPasswordHash("hashed");
-        user.setRole(UserRole.OWNER);
+        user.setRole(UserRole.CLIENT);
         user.setZoneId(UUID.randomUUID());
         user.setActive(true);
         return user;

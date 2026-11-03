@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- enums
-CREATE TYPE user_role AS ENUM ('OWNER', 'WALKER');
+CREATE TYPE user_role AS ENUM ('CLIENT', 'WALKER');
 CREATE TYPE pet_size AS ENUM ('SMALL', 'MEDIUM', 'LARGE');
 CREATE TYPE walk_status AS ENUM ('PUBLISHED', 'COMPLETED', 'CANCELLED');
 CREATE TYPE booking_status AS ENUM ('JOINED', 'CANCELLED');
@@ -33,7 +33,7 @@ CREATE TABLE users (
     created_at       TIMESTAMP NOT NULL DEFAULT now(),
     CONSTRAINT ck_users_default_price_nonneg CHECK (default_price IS NULL OR default_price >= 0),
     CONSTRAINT ck_users_default_capacity_pos CHECK (default_capacity IS NULL OR default_capacity > 0),
-    CONSTRAINT ck_users_owner_has_no_walker_defaults
+    CONSTRAINT ck_users_client_has_no_walker_defaults
         CHECK (role = 'WALKER' OR (default_price IS NULL AND default_capacity IS NULL)),
     CONSTRAINT ck_users_rating_avg_range CHECK (rating_avg >= 0 AND rating_avg <= 5),
     CONSTRAINT ck_users_review_count_nonneg CHECK (review_count >= 0)

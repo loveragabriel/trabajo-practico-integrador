@@ -34,11 +34,10 @@ public class PetService {
 
     @Transactional
     public PetResponse create(UUID userId, PetRequest request) {
-        boolean isActiveOwner = userService.findById(userId)
-                .filter(User::isActive)
-                .map(user -> user.getRole() == UserRole.OWNER)
-                .orElse(false);
-        if (!isActiveOwner) {
+        boolean isActiveClient = userService.findById(userId)
+                .filter(u -> u.isActive() && u.getRole() == UserRole.CLIENT)
+                .isPresent();
+        if (!isActiveClient) {
             throw new ForbiddenActionException("Only clients can register pets");
         }
 

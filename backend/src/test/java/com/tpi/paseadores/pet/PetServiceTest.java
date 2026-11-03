@@ -53,7 +53,7 @@ class PetServiceTest {
     @Test
     void createsAPetForAnActiveOwner() {
         UUID userId = UUID.randomUUID();
-        when(userService.findById(userId)).thenReturn(Optional.of(user(userId, UserRole.OWNER, true)));
+        when(userService.findById(userId)).thenReturn(Optional.of(user(userId, UserRole.CLIENT, true)));
         when(petRepository.save(any(Pet.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         PetResponse response = service.create(userId,
@@ -83,7 +83,7 @@ class PetServiceTest {
     @Test
     void rejectsPetCreationByADeactivatedOwner() {
         UUID userId = UUID.randomUUID();
-        when(userService.findById(userId)).thenReturn(Optional.of(user(userId, UserRole.OWNER, false)));
+        when(userService.findById(userId)).thenReturn(Optional.of(user(userId, UserRole.CLIENT, false)));
 
         assertThatThrownBy(() -> service.create(userId, new PetRequest("Firulais", null, null, null)))
                 .isInstanceOf(ForbiddenActionException.class);

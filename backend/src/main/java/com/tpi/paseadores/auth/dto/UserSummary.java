@@ -6,6 +6,6 @@ import java.util.UUID;
 
 public record UserSummary(UUID id, String name, String role) {
     public static UserSummary from(User user) {
-        return new UserSummary(user.getId(), user.getFullName(), user.getRole().toApiValue());
+        return new UserSummary(user.getId(), user.getFullName(), user.getRole().name());
     }
 }

@@ -27,7 +27,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        UserRole role = UserRole.fromApiValue(request.role());
+        UserRole role = UserRole.valueOf(request.role());
 
         if (userService.existsByEmail(request.email())) {
             throw new BusinessRuleViolationException("Email already registered");
