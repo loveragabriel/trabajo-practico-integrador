@@ -43,6 +43,9 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // read-only catalog, no sensitive data: registration needs it before a token exists
                 .requestMatchers(HttpMethod.GET, "/api/zones/**").permitAll()
+                // walk search is public so guests can browse before signing up. Exact path only:
+                // /api/walks/{id}, /api/walks/mine and every write still require a token
+                .requestMatchers(HttpMethod.GET, "/api/walks").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e

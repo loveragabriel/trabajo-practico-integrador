@@ -1,4 +1,4 @@
-package com.tpi.paseadores.walk;
+package com.tpi.paseadores.walk.search.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
