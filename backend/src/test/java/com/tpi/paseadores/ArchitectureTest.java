@@ -1,7 +1,9 @@
 package com.tpi.paseadores;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -30,6 +32,11 @@ class ArchitectureTest {
 
     private static final String ROOT = "com.tpi.paseadores.";
 
+    // Spring Data interfaces and hand-written @Repository classes (e.g. the JdbcTemplate read model in walk.search)
+    private static final DescribedPredicate<JavaClass> REPOSITORY = JavaClass.Predicates.assignableTo(Repository.class)
+            .or(CanBeAnnotated.Predicates.annotatedWith(org.springframework.stereotype.Repository.class))
+            .as("repositories");
+
     // a feature uses only its own repositories; data from another feature goes through that feature's service
     @ArchTest
     static final ArchRule repositories_only_used_within_their_feature =
@@ -39,7 +46,7 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule controllers_do_not_use_repositories =
             noClasses().that().areAnnotatedWith(RestController.class)
-                    .should().dependOnClassesThat().areAssignableTo(Repository.class);
+                    .should().dependOnClassesThat(REPOSITORY);
 
     // the API speaks DTOs only: JPA entities never reach a controller
     @ArchTest
@@ -75,7 +82,7 @@ class ArchitectureTest {
                 for (Dependency dependency : clazz.getDirectDependenciesFromSelf()) {
                     JavaClass target = dependency.getTargetClass();
                     boolean foreignRepository = target.getPackageName().startsWith(ROOT)
-                            && target.isAssignableTo(Repository.class)
+                            && REPOSITORY.test(target)
                             && !feature(target).equals(feature(clazz));
                     if (foreignRepository && reported.add(target)) {
                         events.add(SimpleConditionEvent.violated(clazz, clazz.getName()
