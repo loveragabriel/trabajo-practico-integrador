@@ -1,5 +1,10 @@
 package com.tpi.paseadores.user;
 
+import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
+import com.tpi.paseadores.shared.validation.StringUtils;
+import com.tpi.paseadores.user.dto.UserResponse;
+import com.tpi.paseadores.user.dto.UserUpdateRequest;
+import com.tpi.paseadores.zone.ZoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final ZoneService zoneService;
 
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
@@ -31,5 +37,28 @@ public class UserService {
     @Transactional
     public User create(User user) {
         return userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getProfile(UUID userId) {
+        return userRepository.findById(userId)
+                .map(UserResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    // RN-02: el rol y el email nunca se editan desde el perfil; la zona es obligatoria para ambos roles
+    @Transactional
+    public UserResponse updateProfile(UUID userId, UserUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!zoneService.existsById(request.zoneId())) {
+            throw new ResourceNotFoundException("Zone not found");
+        }
+
+        user.setFullName(request.fullName().trim());
+        user.setPhone(StringUtils.blankToNull(request.phone()));
+        user.setZoneId(request.zoneId());
+
+        return UserResponse.from(user);
     }
 }
