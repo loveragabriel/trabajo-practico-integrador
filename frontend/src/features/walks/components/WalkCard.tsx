@@ -1,4 +1,6 @@
 import { formatWalkDate, type WalkSummary } from '../api/search'
+import { generatePath, Link } from 'react-router-dom'
+import { paths } from '@/app/paths'
 
 const price = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 })
 
@@ -22,6 +24,7 @@ export function WalkCard({ walk }: { walk: WalkSummary }) {
         <div><dt className="text-slate-500">Punto de encuentro</dt><dd className="mt-0.5 break-words font-medium">{walk.meetingPoint}</dd></div>
       </dl>
       <p className="mt-auto pt-5 text-xl font-bold text-blue-800">{price.format(walk.pricePerPet)} <span className="text-sm font-normal text-slate-500">por mascota</span></p>
+      <Link to={generatePath(paths.walkDetail, { walkId: walk.id })} className="mt-4 rounded-lg border border-blue-200 px-4 py-2 text-center text-sm font-semibold text-blue-700 hover:bg-blue-50">Ver detalle</Link>
     </article>
   )
 }
