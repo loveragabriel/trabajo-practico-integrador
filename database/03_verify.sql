@@ -19,10 +19,10 @@ FROM users
 GROUP BY LOWER(email)
 HAVING count(*) > 1;
 
--- owners with walker-only defaults set, expect 0 rows
+-- clients with walker-only defaults set, expect 0 rows
 SELECT id, email, role, default_price, default_capacity
 FROM users
-WHERE role = 'OWNER' AND (default_price IS NOT NULL OR default_capacity IS NOT NULL);
+WHERE role = 'CLIENT' AND (default_price IS NOT NULL OR default_capacity IS NOT NULL);
 
 -- walks oversold: joined bookings exceeding capacity, expect 0 rows
 SELECT w.id, w.capacity, count(wp.id) AS joined_count

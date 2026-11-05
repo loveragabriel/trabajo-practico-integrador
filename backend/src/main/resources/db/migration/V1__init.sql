@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- enums
 CREATE TYPE user_role AS ENUM ('CLIENT', 'WALKER');
 CREATE TYPE pet_size AS ENUM ('SMALL', 'MEDIUM', 'LARGE');
-CREATE TYPE walk_status AS ENUM ('PUBLISHED', 'COMPLETED', 'CANCELLED');
+CREATE TYPE walk_status AS ENUM ('PUBLISHED', 'FULL', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
 CREATE TYPE booking_status AS ENUM ('JOINED', 'CANCELLED');
 
 -- predefined neighborhoods, no geometry
