@@ -1,5 +1,8 @@
-package com.tpi.paseadores.walk;
+package com.tpi.paseadores.walk.search;
 
+import com.tpi.paseadores.walk.search.dto.WalkSearchFilters;
+import com.tpi.paseadores.walk.search.dto.WalkSearchResponse;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -9,8 +12,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+// read model for the walk listing: one SQL query with the walker, the zone and the free spots
+// (capacity minus JOINED bookings) already resolved, instead of loading JPA entities one by one
 @Repository
 public class WalkSearchRepository {
+    private static final RowMapper<WalkSearchResponse> ROW_MAPPER = (rs, row) -> new WalkSearchResponse(
+            rs.getObject("id", UUID.class), rs.getObject("zone_id", UUID.class), rs.getString("zone_name"),
+            rs.getTimestamp("start_time").toLocalDateTime(), rs.getInt("duration_minutes"),
+            rs.getString("meeting_point"), rs.getBigDecimal("price_per_pet"),
+            rs.getInt("capacity"), rs.getInt("available_spots"),
+            new WalkSearchResponse.WalkerSummary(rs.getObject("walker_id", UUID.class),
+                    rs.getString("full_name"), rs.getBigDecimal("rating_avg"), rs.getInt("review_count")));
+
     private final NamedParameterJdbcTemplate jdbc;
 
     public WalkSearchRepository(NamedParameterJdbcTemplate jdbc) {
@@ -50,12 +63,6 @@ public class WalkSearchRepository {
             params.addValue("startsTo", Timestamp.valueOf(filters.startsTo()));
         }
         sql.append(" ORDER BY w.start_time, w.id LIMIT :limit OFFSET :offset");
-        return jdbc.query(sql.toString(), params, (rs, row) -> new WalkSearchResponse(
-                rs.getObject("id", UUID.class), rs.getObject("zone_id", UUID.class), rs.getString("zone_name"),
-                rs.getTimestamp("start_time").toLocalDateTime(), rs.getInt("duration_minutes"),
-                rs.getString("meeting_point"), rs.getBigDecimal("price_per_pet"),
-                rs.getInt("capacity"), rs.getInt("available_spots"),
-                new WalkSearchResponse.WalkerSummary(rs.getObject("walker_id", UUID.class),
-                        rs.getString("full_name"), rs.getBigDecimal("rating_avg"), rs.getInt("review_count"))));
+        return jdbc.query(sql.toString(), params, ROW_MAPPER);
     }
 }

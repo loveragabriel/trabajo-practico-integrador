@@ -1,5 +1,7 @@
-package com.tpi.paseadores.walk;
+package com.tpi.paseadores.walk.search;
 
+import com.tpi.paseadores.walk.search.dto.WalkSearchFilters;
+import com.tpi.paseadores.walk.search.dto.WalkSearchPageResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

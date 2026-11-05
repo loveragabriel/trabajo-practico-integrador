@@ -56,6 +56,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, null);
     }
 
+    // same advice as the catch-all above, so the most specific handler wins without depending on @Order
+    @ExceptionHandler(InvalidFieldException.class)
+    public ResponseEntity<ApiError> handleInvalidField(InvalidFieldException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request,
+                List.of(new ApiError.FieldError(ex.getField(), ex.getMessage())));
+    }
+
     private ResponseEntity<ApiError> build(HttpStatus status, String message, HttpServletRequest request,
                                             List<ApiError.FieldError> fieldErrors) {
         ApiError body = new ApiError(Instant.now(), status.value(), status.getReasonPhrase(), message,

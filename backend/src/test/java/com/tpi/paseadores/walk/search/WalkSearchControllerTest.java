@@ -1,5 +1,9 @@
-package com.tpi.paseadores.walk;
+package com.tpi.paseadores.walk.search;
 
+import com.tpi.paseadores.shared.exception.InvalidFieldException;
+import com.tpi.paseadores.walk.search.dto.WalkSearchFilters;
+import com.tpi.paseadores.walk.search.dto.WalkSearchPageResponse;
+import com.tpi.paseadores.walk.search.dto.WalkSearchResponse;
 import com.tpi.paseadores.shared.config.SecurityConfig;
 import com.tpi.paseadores.shared.security.JwtAuthenticationFilter;
 import com.tpi.paseadores.shared.security.JwtService;
@@ -22,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(WalkSearchController.class)
-@Import({WalkSearchSecurityConfig.class, SecurityConfig.class, JwtAuthenticationFilter.class, JwtService.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtService.class})
 @TestPropertySource(properties = "app.jwt.secret=test-secret-not-for-production-use")
 class WalkSearchControllerTest {
     @Autowired MockMvc mvc;
@@ -67,7 +71,7 @@ class WalkSearchControllerTest {
 
     @Test
     void invalidRangeIsBadRequest() throws Exception {
-        when(service.search(any())).thenThrow(new InvalidWalkSearchException("startsTo", "Hasta debe ser posterior a Desde."));
+        when(service.search(any())).thenThrow(new InvalidFieldException("startsTo", "Hasta debe ser posterior a Desde."));
         mvc.perform(get("/api/walks")).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("startsTo"));
     }
@@ -78,6 +82,13 @@ class WalkSearchControllerTest {
         mvc.perform(get("/api/walks/mine")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/walks/" + UUID.randomUUID())).andExpect(status().isUnauthorized());
         verifyNoInteractions(service);
+    }
+
+    @Test
+    void signedInUserCanSearchToo() throws Exception {
+        String token = jwt.generateToken(UUID.randomUUID().toString(), "CLIENT");
+        when(service.search(any())).thenReturn(new WalkSearchPageResponse(List.of(), 0, 12, false));
+        mvc.perform(get("/api/walks").header("Authorization", "Bearer " + token)).andExpect(status().isOk());
     }
 
     @Test

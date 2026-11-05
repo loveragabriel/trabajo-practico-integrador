@@ -1,5 +1,7 @@
-package com.tpi.paseadores.walk;
+package com.tpi.paseadores.walk.search;
 
+import com.tpi.paseadores.walk.search.dto.WalkSearchFilters;
+import com.tpi.paseadores.walk.search.dto.WalkSearchResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -33,7 +35,7 @@ class WalkSearchDatabaseIntegrationTest {
         zone = UUID.randomUUID();
         jdbc.update("INSERT INTO zones(id,name) VALUES (?,?)", zone, "Barrio de prueba " + zone);
         walker = user("WALKER", true);
-        owner = user("OWNER", true);
+        owner = user("CLIENT", true);
         start = LocalDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).plusDays(3).withNano(0);
         available = walk(walker, "PUBLISHED", start, 3);
         booking(available, "JOINED");

@@ -1,5 +1,8 @@
-package com.tpi.paseadores.walk;
+package com.tpi.paseadores.walk.search;
 
+import com.tpi.paseadores.shared.exception.InvalidFieldException;
+import com.tpi.paseadores.walk.search.dto.WalkSearchFilters;
+import com.tpi.paseadores.walk.search.dto.WalkSearchResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +55,7 @@ class WalkSearchServiceTest {
     void rejectsEqualAndReversedRangesBeforeQuerying() {
         for (var end : List.of(NOW, NOW.minusHours(1))) {
             assertThatThrownBy(() -> service.search(new WalkSearchFilters(null, NOW, end, 0, 12)))
-                    .isInstanceOf(InvalidWalkSearchException.class);
+                    .isInstanceOf(InvalidFieldException.class);
         }
         verifyNoInteractions(repository);
     }
@@ -62,7 +65,7 @@ class WalkSearchServiceTest {
         for (var filters : List.of(new WalkSearchFilters(null, null, null, -1, 12),
                 new WalkSearchFilters(null, null, null, 0, 0),
                 new WalkSearchFilters(null, null, null, 0, 51))) {
-            assertThatThrownBy(() -> service.search(filters)).isInstanceOf(InvalidWalkSearchException.class);
+            assertThatThrownBy(() -> service.search(filters)).isInstanceOf(InvalidFieldException.class);
         }
         verifyNoInteractions(repository);
     }
