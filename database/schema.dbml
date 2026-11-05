@@ -2,7 +2,7 @@
 // Mirrors database/01_schema.sql
 
 Enum user_role {
-  OWNER
+  CLIENT
   WALKER
 }
 
@@ -14,6 +14,8 @@ Enum pet_size {
 
 Enum walk_status {
   PUBLISHED
+  FULL
+  IN_PROGRESS
   COMPLETED
   CANCELLED
 }
