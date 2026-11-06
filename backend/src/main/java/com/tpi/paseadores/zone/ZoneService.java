@@ -4,6 +4,7 @@ import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,5 +28,11 @@ public class ZoneService {
 
     public boolean existsById(UUID id) {
         return repository.existsById(id);
+    }
+
+    // usado por el módulo de paseadores y cobertura para resolver sus walker_zones
+    public List<ZoneResponse> findAllById(List<UUID> ids) {
+        return repository.findAllByIdIn(ids).stream().map(ZoneResponse::from)
+                .sorted(Comparator.comparing(ZoneResponse::name)).toList();
     }
 }

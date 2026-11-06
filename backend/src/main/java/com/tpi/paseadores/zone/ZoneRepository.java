@@ -2,6 +2,7 @@ package com.tpi.paseadores.zone;
 
 import org.springframework.data.repository.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,4 +13,6 @@ public interface ZoneRepository extends Repository<Zone, UUID> {
     Optional<Zone> findById(UUID id);
 
     boolean existsById(UUID id);
+
+    List<Zone> findAllByIdIn(Collection<UUID> ids);
 }

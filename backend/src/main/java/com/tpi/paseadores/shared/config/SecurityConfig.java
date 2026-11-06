@@ -46,6 +46,10 @@ public class SecurityConfig {
                 // walk search is public so guests can browse before signing up. Exact path only:
                 // /api/walks/{id}, /api/walks/mine and every write still require a token
                 .requestMatchers(HttpMethod.GET, "/api/walks").permitAll()
+                // walker public profile is also public, but /me must stay authenticated. Declared
+                // first so it isn't swallowed by the wildcard permitAll right below it
+                .requestMatchers(HttpMethod.GET, "/api/walkers/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/walkers/*").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e
