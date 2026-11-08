@@ -28,11 +28,13 @@ Las tarjetas de búsqueda y agenda permiten abrir `/walks/{id}`. Esa pantalla mu
 
 No agregamos botones de reserva, cancelación ni cambio de estado mientras esas operaciones sigan pendientes. La consulta de cupos no garantiza una reserva; la operación de incorporación tendrá que volver a comprobarlos dentro de la transacción con bloqueo.
 
+El alta de paseos se describe en [Publicación de paseos](publicacion-paseos.md).
+
 ## Dependencias para continuar
 
 | Pendiente | Qué necesitamos acordar |
 | --- | --- |
-| Publicar paseos | Consulta de cobertura en `user`, validación del paseador activo y bloqueo por paseador para evitar horarios superpuestos. El barrio de referencia no reemplaza la cobertura. |
+| Configuración de cobertura en el perfil | El backend de cobertura ya permite cargar las zonas de servicio y los valores predeterminados. Falta integrar su edición en el perfil para completar el recorrido desde la interfaz. |
 | Cancelar y cambiar estados | Integración con reservas y transiciones de `WalkStatus`. La cancelación debe actualizar las reservas correspondientes en la misma transacción. |
 | Historial del cliente | Contrato de reservas propias y conexión con `features/bookings`. Esta entrega agrega la agenda del paseador. |
 | Edición de un paseo | Confirmar las reglas de horario, precio y cupo con las que usa el módulo de reservas antes de agregar escrituras. |

@@ -47,7 +47,7 @@ cd backend
 MSYS_NO_PATHCONV=1 cmd.exe /c "mvnw.cmd spring-boot:run"
 ```
 
-La clave del ejemplo es solo para desarrollo local. En un despliegue configuramos una clave privada propia. Las variables se exportan en la misma terminal donde ejecutamos el backend; el proyecto no carga un archivo `.env` por sí solo.
+La clave del ejemplo es solo para desarrollo local. En un despliegue configuramos una clave privada propia. Podemos exportar las variables en la terminal o usar un `.env` local en `backend` con formato `CLAVE=valor`: Spring lo importa opcionalmente al arrancar desde esa carpeta. Conservamos ese archivo fuera del repositorio.
 
 En Linux o macOS usamos las mismas variables y reemplazamos el último comando por:
 
@@ -69,7 +69,7 @@ pnpm dev
 
 Abrimos `http://localhost:5173`. Para revisar directamente la búsqueda, usamos `http://localhost:5173/walks`.
 
-Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda puede abrirse sin sesión. Si no hay paseos publicados en la base, veremos una lista vacía. La publicación, las reservas y otras pantallas todavía están pendientes de completar.
+Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda puede abrirse sin sesión. Si no hay paseos publicados en la base, veremos una lista vacía. Para crear uno seguimos [Publicación de paseos](publicacion-paseos.md); las reservas siguen pendientes.
 
 ## Comprobar la API
 

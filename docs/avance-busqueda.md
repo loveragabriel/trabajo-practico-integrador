@@ -36,7 +36,7 @@ El diseño de la búsqueda usa fondos claros, tarjetas redondeadas y botones azu
 
 ## Lo que falta integrar
 
-Para continuar la publicación necesitamos completar la cobertura del paseador y comprobar las superposiciones de horarios. La agenda, la cancelación, el completado y el historial deben integrarse con las reservas.
+Los paseos creados desde [Publicación de paseos](publicacion-paseos.md) aparecen en la búsqueda si están publicados, son futuros y tienen cupo. Queda integrar la cancelación, los cambios de estado y el historial del cliente con las reservas.
 
 El cupo que muestra una búsqueda puede cambiar. La futura operación de reserva tendrá que comprobarlo nuevamente dentro de una transacción con bloqueo. La consulta por sí sola no garantiza un lugar.
 
