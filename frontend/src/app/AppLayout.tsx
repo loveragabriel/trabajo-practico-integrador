@@ -21,15 +21,13 @@ const navByRole: Record<Role, NavItem[]> = {
   ],
 }
 
-const guestNav: NavItem[] = [{ to: paths.walks, label: 'Buscar paseos' }]
-
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return isActive ? 'font-semibold text-emerald-700' : 'text-slate-600 hover:text-slate-900'
 }
 
 export function AppLayout() {
   const { session, signOut } = useAuth()
-  const items = session ? navByRole[session.user.role] : guestNav
+  const items = session ? navByRole[session.user.role] : []
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">

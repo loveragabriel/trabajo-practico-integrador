@@ -98,17 +98,6 @@ export function LoginPage() {
         </button>
       </form>
 
-      {import.meta.env.DEV && (
-        <div className="mt-8 space-y-2 rounded-md border border-dashed border-amber-400 p-4">
-          <p className="text-sm text-amber-700">Acceso de desarrollo (no se incluye en el build)</p>
-          <button type="button" onClick={() => devSignIn('CLIENT')} className="block underline">
-            Entrar como cliente
-          </button>
-          <button type="button" onClick={() => devSignIn('WALKER')} className="block underline">
-            Entrar como paseador
-          </button>
-        </div>
-      )}
     </section>
   )
 }
