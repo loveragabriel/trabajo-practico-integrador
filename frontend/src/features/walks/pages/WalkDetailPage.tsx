@@ -94,7 +94,7 @@ export function WalkDetailPage() {
 
   if (!session) return (
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
-      <PageHeader title="Ingresá para ver este paseo" description="Podés buscar paseos sin cuenta. Para consultar el detalle, iniciá sesión." />
+      <PageHeader title="Ingresá para ver este paseo" description="Buscar paseos y ver el detalle requiere una cuenta." />
       <Link to={paths.login} state={{ from: location }} className="inline-block rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Ingresar</Link>
       <Link to={paths.walks} className="ml-4 text-sm font-medium text-blue-700 underline">Volver a la búsqueda</Link>
     </section>
