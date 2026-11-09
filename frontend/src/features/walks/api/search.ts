@@ -1,3 +1,5 @@
+import { apiClient, ApiRequestError } from '@/shared/api/client'
+
 export interface WalkSummary {
   id: string
   zoneId: string
@@ -81,21 +83,18 @@ function isWalk(value: unknown): value is WalkSummary {
 export async function loadWalks(filters: WalkFilters, signal?: AbortSignal): Promise<WalkSearchResult> {
   const params = walkSearchParams(filters)
   params.set('size', '12')
-  let response: Response
+  let body: WalkSearchResult | null
   try {
-    response = await fetch(`/api/walks?${params}`, {
-      headers: { Accept: 'application/json' }, credentials: 'omit', signal,
-    })
+    const response = await apiClient.get<WalkSearchResult>(`/walks?${params}`, { signal })
+    body = response.data
   } catch (error) {
     if (signal?.aborted) throw error
+    if (error instanceof ApiRequestError) {
+      if (error.status === 400) throw new Error('Los filtros no son válidos. Revisá el barrio y las fechas.')
+      if (error.status === 401) throw new Error('Ingresá para buscar paseos disponibles.')
+    }
     throw new Error('No pudimos conectar con el servidor. Intentá nuevamente.')
   }
-  if (!response.ok) throw new Error(response.status === 400
-    ? 'Los filtros no son válidos. Revisá el barrio y las fechas.'
-    : 'No pudimos cargar los paseos. Intentá nuevamente.')
-  let data: unknown
-  try { data = await response.json() } catch { throw new Error('La respuesta de paseos no tiene un formato válido.') }
-  const body = data as WalkSearchResult | null
   if (!body || !Array.isArray(body.items) || !body.items.every(isWalk)
     || body.page !== filters.page || body.size !== 12 || body.items.length > 12
     || typeof body.hasNext !== 'boolean'
