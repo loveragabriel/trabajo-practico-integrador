@@ -5,7 +5,6 @@ import { login } from '@/features/auth/api/auth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { ApiRequestError } from '@/shared/api/client'
 import { PageHeader } from '@/shared/components/PageHeader'
-import type { Role } from '@/shared/types/user'
 
 export function LoginPage() {
   const { signIn } = useAuth()
@@ -38,12 +37,6 @@ export function LoginPage() {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  // solo en desarrollo, hasta que exista el selector de zona público: permite recorrer las rutas protegidas
-  function devSignIn(role: Role) {
-    signIn({ token: 'dev', user: { id: 'dev', name: role === 'CLIENT' ? 'Cliente demo' : 'Paseador demo', role } })
-    navigate(from, { replace: true })
   }
 
   return (
@@ -97,7 +90,6 @@ export function LoginPage() {
           {submitting ? 'Ingresando…' : 'Ingresar'}
         </button>
       </form>
-
     </section>
   )
 }
