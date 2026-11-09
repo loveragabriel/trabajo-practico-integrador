@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 // reglas propias de la entidad walk_pets: RN-23 a RN-28, RN-32, RN-33. No conoce rol, lock ni
@@ -84,5 +85,12 @@ public class WalkPetService {
     @Transactional(readOnly = true)
     public boolean hasAnyJoined(UUID walkId) {
         return walkPetRepository.countByWalkIdAndStatus(walkId, BookingStatus.JOINED) > 0;
+    }
+
+    // usado por review: el autor participó si alguna de sus mascotas tiene una reserva JOINED en el paseo
+    @Transactional(readOnly = true)
+    public boolean hasJoinedBooking(UUID walkId, List<UUID> petIds) {
+        return !petIds.isEmpty()
+                && walkPetRepository.existsByWalkIdAndPetIdInAndStatus(walkId, petIds, BookingStatus.JOINED);
     }
 }

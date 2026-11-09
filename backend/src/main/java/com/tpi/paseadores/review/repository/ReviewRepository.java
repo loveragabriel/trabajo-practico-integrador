@@ -8,4 +8,7 @@ import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
     List<Review> findAllByWalkId(UUID walkId);
+
+    // uq_reviews_walk_author en la base es el resguardo final; esto evita llegar a esa excepción
+    boolean existsByWalkIdAndAuthorId(UUID walkId, UUID authorId);
 }

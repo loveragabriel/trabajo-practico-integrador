@@ -18,4 +18,7 @@ public interface WalkPetRepository extends JpaRepository<WalkPet, UUID> {
 
     // RN-32: todas las reservas activas a cancelar cuando el paseador cancela el paseo
     List<WalkPet> findAllByWalkIdAndStatus(UUID walkId, BookingStatus status);
+
+    // usado por review: solo quien participó (una mascota propia JOINED en el paseo) puede calificar
+    boolean existsByWalkIdAndPetIdInAndStatus(UUID walkId, List<UUID> petIds, BookingStatus status);
 }
