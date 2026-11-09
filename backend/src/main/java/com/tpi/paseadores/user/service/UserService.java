@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,5 +64,18 @@ public class UserService {
         user.setZoneId(request.zoneId());
 
         return UserResponse.from(user);
+    }
+
+    // usado por review al calificar un paseo: suma una calificación al promedio del paseador,
+    // bajo lock de fila para serializar reseñas concurrentes del mismo paseador
+    @Transactional
+    public void applyReviewRating(UUID walkerId, int rating) {
+        User walker = userRepository.findByIdForUpdate(walkerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Walker not found"));
+        int newCount = walker.getReviewCount() + 1;
+        BigDecimal total = walker.getRatingAvg().multiply(BigDecimal.valueOf(walker.getReviewCount()))
+                .add(BigDecimal.valueOf(rating));
+        walker.setRatingAvg(total.divide(BigDecimal.valueOf(newCount), 1, RoundingMode.HALF_UP));
+        walker.setReviewCount(newCount);
     }
 }

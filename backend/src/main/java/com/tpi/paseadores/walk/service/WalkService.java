@@ -140,6 +140,14 @@ public class WalkService {
         walk.transitionTo(target);
     }
 
+    // usado por review: trae el Walk sin el filtro de visibilidad de getById (la validación de
+    // quién puede calificar la hace ReviewService con las reglas propias de esa feature)
+    @Transactional(readOnly = true)
+    public Walk getWalkForReview(UUID walkId) {
+        return walkRepository.findById(walkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paseo no encontrado."));
+    }
+
     private User activeUser(UUID id) {
         return users.findById(id).filter(User::isActive)
                 .orElseThrow(() -> new ForbiddenActionException("Necesitás una cuenta activa para consultar los paseos."));

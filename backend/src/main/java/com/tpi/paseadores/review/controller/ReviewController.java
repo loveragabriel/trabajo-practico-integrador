@@ -19,13 +19,14 @@ public class ReviewController {
     public ReviewController(ReviewService service) { this.service = service; }
 
     @GetMapping
-    public List<ReviewResponse> listAll(@AuthenticationPrincipal String userId, @PathVariable String walkId) {
-        return service.getAll(UUID.fromString(userId), UUID.fromString(walkId));
+    public List<ReviewResponse> listAll(@AuthenticationPrincipal String userId, @PathVariable UUID walkId) {
+        return service.getAll(UUID.fromString(userId), walkId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReviewResponse create(@AuthenticationPrincipal String userId, @PathVariable String walkId, @Valid @RequestBody ReviewCreateRequest request) {
-        return service.create(UUID.fromString(userId), request);
+    public ReviewResponse create(@AuthenticationPrincipal String userId, @PathVariable UUID walkId,
+                                  @Valid @RequestBody ReviewCreateRequest request) {
+        return service.create(UUID.fromString(userId), walkId, request);
     }
 }

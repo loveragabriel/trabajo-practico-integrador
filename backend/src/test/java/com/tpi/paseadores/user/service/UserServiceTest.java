@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -93,6 +94,41 @@ class UserServiceTest {
                 new UserUpdateRequest("Gabriel", null, UUID.randomUUID())))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("User not found");
+    }
+
+    @Test
+    void theFirstRatingSetsTheAverageToThatRating() {
+        User walker = user(UUID.randomUUID(), "Paseador", UUID.randomUUID());
+        when(userRepository.findByIdForUpdate(walker.getId())).thenReturn(Optional.of(walker));
+
+        service.applyReviewRating(walker.getId(), 4);
+
+        assertThat(walker.getRatingAvg()).isEqualByComparingTo("4.0");
+        assertThat(walker.getReviewCount()).isEqualTo(1);
+    }
+
+    @Test
+    void laterRatingsAverageWithThePreviousOnesAndRoundToOneDecimal() {
+        User walker = user(UUID.randomUUID(), "Paseador", UUID.randomUUID());
+        walker.setRatingAvg(new BigDecimal("4.0"));
+        walker.setReviewCount(2);
+        when(userRepository.findByIdForUpdate(walker.getId())).thenReturn(Optional.of(walker));
+
+        // (4.0*2 + 5) / 3 = 4.333... -> redondea a 4.3
+        service.applyReviewRating(walker.getId(), 5);
+
+        assertThat(walker.getRatingAvg()).isEqualByComparingTo("4.3");
+        assertThat(walker.getReviewCount()).isEqualTo(3);
+    }
+
+    @Test
+    void rejectsRatingAnUnknownWalker() {
+        UUID walkerId = UUID.randomUUID();
+        when(userRepository.findByIdForUpdate(walkerId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.applyReviewRating(walkerId, 5))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Walker not found");
     }
 
     private static User user(UUID id, String fullName, UUID zoneId) {
