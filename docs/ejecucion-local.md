@@ -95,7 +95,7 @@ Frontend, desde la raíz:
 cd frontend
 pnpm build
 pnpm lint
-node --test tests/*.test.ts
+node --import ./tests/register-hooks.mjs --test tests/*.test.ts
 ```
 
 Backend, desde la raíz en Git Bash de Windows:

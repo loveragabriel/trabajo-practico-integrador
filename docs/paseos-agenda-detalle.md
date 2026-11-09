@@ -50,7 +50,7 @@ Desde `frontend`:
 pnpm install --frozen-lockfile
 pnpm build
 pnpm lint
-node --test tests/*.test.ts
+node --import ./tests/register-hooks.mjs --test tests/*.test.ts
 ```
 
 Desde `backend`, con Java 21:
