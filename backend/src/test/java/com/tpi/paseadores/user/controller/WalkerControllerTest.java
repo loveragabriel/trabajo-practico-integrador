@@ -106,6 +106,18 @@ class WalkerControllerTest {
     }
 
     @Test
+    void rejectsAnUpdateWithAnEmptyZoneIdsList() throws Exception {
+        mvc.perform(put("/api/walkers/me").header("Authorization", bearer(UUID.randomUUID()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"defaultPrice":3000,"defaultCapacity":5,"zoneIds":[]}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("zoneIds"));
+        verifyNoInteractions(service);
+    }
+
+    @Test
     void translatesAClientTryingToPublishCoverageToForbidden() throws Exception {
         UUID clientId = UUID.randomUUID();
         when(service.updateOwnCoverage(eq(clientId), any()))
@@ -114,8 +126,8 @@ class WalkerControllerTest {
         mvc.perform(put("/api/walkers/me").header("Authorization", bearer(clientId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"zoneIds":[]}
-                                """))
+                                {"zoneIds":["%s"]}
+                                """.formatted(UUID.randomUUID())))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("Only walkers can manage service coverage"));
     }
