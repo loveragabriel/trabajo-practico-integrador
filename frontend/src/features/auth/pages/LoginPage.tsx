@@ -4,7 +4,9 @@ import { paths } from '@/app/paths'
 import { login } from '@/features/auth/api/auth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { ApiRequestError } from '@/shared/api/client'
-import { PageHeader } from '@/shared/components/PageHeader'
+import { AppScreen } from '@/shared/components/AppScreen'
+import { Icon } from '@/shared/components/Icon'
+import { TextField } from '@/shared/components/TextField'
 
 export function LoginPage() {
   const { signIn } = useAuth()
@@ -16,6 +18,7 @@ export function LoginPage() {
   const passwordId = useId()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -40,56 +43,109 @@ export function LoginPage() {
   }
 
   return (
-    <section className="mx-auto max-w-sm">
-      <PageHeader title="Ingresar" />
-      <p className="text-slate-600">
-        ¿No tenés cuenta?{' '}
-        <Link to={paths.register} className="text-emerald-700 underline">
-          Registrate
-        </Link>
-      </p>
+    <>
+      {/* fuera de AppScreen a propósito: se apoya contra el borde real de la ventana,
+          no contra el de la columna centrada (max-w-md) de acá abajo */}
+      <div className="mt-4 ml-5 mb-4  flex w-fit items-center gap-1.5 rounded-full bg-surface-container-lowest px-3 py-1.5 shadow-sm">
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-on-primary">
+          <Icon name="pets" filled className="text-[15px]" />
+        </div>
+        <span className="text-label-md text-primary">Paseadores</span>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div className="space-y-2">
-          <label htmlFor={emailId} className="block text-sm font-medium text-slate-800">
-            Email
-          </label>
-          <input
-            id={emailId}
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            autoComplete="email"
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-emerald-600 focus:outline-2 focus:outline-emerald-600 disabled:bg-slate-100"
-          />
+      <AppScreen>
+        <section className="mt-4 mb-5">
+          <div className="mb-2.5 inline-flex items-center gap-2 rounded-full bg-secondary-fixed/50 px-2.5 py-1 text-on-secondary-fixed">
+            <Icon name="verified_user" filled className="text-[16px] text-secondary" />
+            <span className="text-label-sm font-medium">Comunidad verificada BA</span>
+          </div>
+          <h1 className="text-headline-lg font-bold tracking-tight text-on-surface">¡Hola de nuevo! 🐾</h1>
+          <p className="mt-1.5 leading-relaxed text-body-md text-on-surface-variant">
+            Ingresá a tu cuenta para publicar o reservar paseos grupales en tu barrio.
+          </p>
+        </section>
+
+        <div className="space-y-4 rounded-xl bg-surface-container-lowest p-5 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <fieldset disabled={submitting} className="space-y-4">
+              <TextField
+                id={emailId}
+                label="Correo electrónico"
+                icon="mail"
+                type="email"
+                autoComplete="email"
+                placeholder="martina@ejemplo.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+
+              <TextField
+                id={passwordId}
+                label="Contraseña"
+                icon="lock"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                trailing={
+                  <button
+                    type="button"
+                    aria-label="Mostrar u ocultar contraseña"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-3.5 flex h-7 w-7 items-center justify-center text-on-surface-variant transition-transform hover:text-primary active:scale-90"
+                  >
+                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} className="text-[20px]" />
+                  </button>
+                }
+              />
+
+              <div className="flex items-center justify-between pt-1">
+                <label className="flex cursor-pointer select-none items-center gap-2">
+                  <span className="relative inline-flex h-[22px] w-[22px] items-center justify-center">
+                    <input type="checkbox" defaultChecked className="peer sr-only" />
+                    <span className="absolute inset-0 rounded bg-surface-container-high transition-colors peer-checked:bg-primary" />
+                    <Icon name="check" className="relative scale-0 text-[16px] text-on-primary transition-transform peer-checked:scale-100" />
+                  </span>
+                  <span className="text-body-sm text-on-surface-variant">Recordarme</span>
+                </label>
+                {/* TODO: no existe recuperación de contraseña todavía */}
+                <button type="button" className="text-label-md text-primary underline-offset-2 hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              {error && <p className="text-body-sm text-error">{error}</p>}
+
+              <button
+                type="submit"
+                className="mt-2 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-primary-container text-label-lg text-on-primary shadow-sm transition-all active:scale-[0.98] active:bg-primary disabled:opacity-60"
+              >
+                <span>{submitting ? 'Ingresando…' : 'Ingresar'}</span>
+                <Icon name="arrow_forward" className="text-[18px]" />
+              </button>
+            </fieldset>
+          </form>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor={passwordId} className="block text-sm font-medium text-slate-800">
-            Contraseña
-          </label>
-          <input
-            id={passwordId}
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            autoComplete="current-password"
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-emerald-600 focus:outline-2 focus:outline-emerald-600 disabled:bg-slate-100"
-          />
+        <div className="mb-6 mt-4 rounded-xl bg-surface-container-low p-4 text-center">
+          <p className="text-body-md text-on-surface">¿No tenés cuenta todavía?</p>
+          <Link
+            to={paths.register}
+            className="mt-1 inline-flex items-center gap-1.5 text-label-lg text-primary underline-offset-4 hover:underline"
+          >
+            <span>Creá tu cuenta gratis</span>
+            <Icon name="person_add" className="text-[18px]" />
+          </Link>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-emerald-600 px-3 py-2 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-        >
-          {submitting ? 'Ingresando…' : 'Ingresar'}
-        </button>
-      </form>
-    </section>
+        <div className="flex items-center justify-center gap-2 pb-6 text-on-surface-variant/80">
+          <Icon name="shield" filled className="text-[18px] text-secondary" />
+          <span className="text-center text-caption">Paseos grupales protegidos y seguros en tu barrio</span>
+        </div>
+      </AppScreen>
+    </>
   )
 }

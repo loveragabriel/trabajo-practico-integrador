@@ -18,20 +18,20 @@ import { paths } from './paths'
 
 // Las guardas son rutas sin path: agrupan hijas que comparten la misma regla de acceso.
 export const router = createBrowserRouter([
+  // login/register controlan toda la pantalla (diseño propio, sin el nav de escritorio
+  // de AppLayout): no tiene sentido mostrar la navegación de la app antes de tener sesión
+  {
+    element: <GuestOnly />,
+    children: [
+      { path: paths.login, element: <LoginPage /> },
+      { path: paths.register, element: <RegisterPage /> },
+    ],
+  },
   {
     element: <AppLayout />,
     children: [
       // públicas
       { path: paths.home, element: <HomePage /> },
-
-      // solo sin sesión
-      {
-        element: <GuestOnly />,
-        children: [
-          { path: paths.login, element: <LoginPage /> },
-          { path: paths.register, element: <RegisterPage /> },
-        ],
-      },
 
       // cualquier usuario autenticado: ver paseos y perfiles de paseador requiere cuenta
       // (GET /api/walks y GET /api/walkers/{id} ya no son públicos en el backend)

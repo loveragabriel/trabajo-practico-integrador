@@ -107,3 +107,22 @@
   --text-headline-lg: 28px;
   --text-headline-lg--line-height: 34px;
 }
+
+/* pantallas estilo app (login, register) que ocupan todo el viewport, sin AppLayout */
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* fondo base de toda la app: si no se hace esto global, cualquier elemento que
+   quede fuera del wrapper de una pantalla puntual (AppScreen, AppLayout, etc.)
+   muestra el blanco default del navegador en vez de bg-surface */
+@layer base {
+  body {
+    background-color: var(--color-surface);
+  }
+}
