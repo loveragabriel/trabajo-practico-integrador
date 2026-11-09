@@ -5,6 +5,7 @@ import { ApiRequestError } from '@/shared/api/client'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ROLE_LABELS } from '@/shared/types/user'
 import { updateMyProfile } from '../api/profile'
+import { CoverageEditor } from '../components/CoverageEditor'
 import { useProfile } from '../hooks/useProfile'
 import type { UserProfile } from '../types'
 
@@ -32,14 +33,24 @@ export function ProfilePage() {
         </div>
       )}
       {profile && (
-        <ProfileForm
-          profile={profile}
-          zones={zones.zones}
-          zonesLoading={zones.loading}
-          onSaved={(updated) => {
-            if (session) signIn({ ...session, user: { ...session.user, name: updated.fullName } })
-          }}
-        />
+        <>
+          <ProfileForm
+            profile={profile}
+            zones={zones.zones}
+            zonesLoading={zones.loading}
+            onSaved={(updated) => {
+              if (session) signIn({ ...session, user: { ...session.user, name: updated.fullName } })
+            }}
+          />
+          {profile.role === 'WALKER' && (
+            <>
+              <p className="mt-6 text-sm text-slate-600">
+                Calificación: {profile.reviewCount > 0 ? `${profile.ratingAvg} (${profile.reviewCount} reseñas)` : 'sin reseñas aún'}
+              </p>
+              <CoverageEditor />
+            </>
+          )}
+        </>
       )}
     </section>
   )
@@ -120,15 +131,6 @@ function ProfileForm({ profile, zones, zonesLoading, onSaved }: ProfileFormProps
       </div>
 
       <ZoneSelect zones={zones} value={zoneId} onChange={setZoneId} label="Barrio" disabled={zonesLoading} required />
-
-      {/* RN-08/RN-04: precio, cupo y zonas de cobertura se editan en la tarea de Paseadores y cobertura */}
-      {profile.role === 'WALKER' && (
-        <div className="space-y-1 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          <p>Precio por defecto: {profile.defaultPrice != null ? `$${profile.defaultPrice}` : 'sin definir'}</p>
-          <p>Cupo por defecto: {profile.defaultCapacity ?? 'sin definir'}</p>
-          <p>Calificación: {profile.reviewCount > 0 ? `${profile.ratingAvg} (${profile.reviewCount} reseñas)` : 'sin reseñas aún'}</p>
-        </div>
-      )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {success && <p className="text-sm text-emerald-700">Perfil actualizado.</p>}
