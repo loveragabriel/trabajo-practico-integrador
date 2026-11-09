@@ -78,18 +78,23 @@ function isWalk(value: unknown): value is WalkSummary {
     && Number.isInteger(w.walker.reviewCount) && w.walker.reviewCount >= 0
 }
 
-export async function loadWalks(filters: WalkFilters, signal?: AbortSignal): Promise<WalkSearchResult> {
+export class WalkSearchAuthError extends Error {}
+
+export async function loadWalks(filters: WalkFilters, signal?: AbortSignal, token?: string): Promise<WalkSearchResult> {
   const params = walkSearchParams(filters)
   params.set('size', '12')
   let response: Response
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
   try {
     response = await fetch(`/api/walks?${params}`, {
-      headers: { Accept: 'application/json' }, credentials: 'omit', signal,
+      headers, credentials: 'omit', signal,
     })
   } catch (error) {
     if (signal?.aborted) throw error
     throw new Error('No pudimos conectar con el servidor. Intentá nuevamente.')
   }
+  if (response.status === 401) throw new WalkSearchAuthError('Ingresá nuevamente para buscar paseos.')
   if (!response.ok) throw new Error(response.status === 400
     ? 'Los filtros no son válidos. Revisá el barrio y las fechas.'
     : 'No pudimos cargar los paseos. Intentá nuevamente.')

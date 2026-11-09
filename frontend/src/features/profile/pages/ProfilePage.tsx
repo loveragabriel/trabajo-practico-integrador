@@ -5,6 +5,7 @@ import { ApiRequestError } from '@/shared/api/client'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ROLE_LABELS } from '@/shared/types/user'
 import { updateMyProfile } from '../api/profile'
+import { CoverageEditor } from '../components/CoverageEditor'
 import { useProfile } from '../hooks/useProfile'
 import type { UserProfile } from '../types'
 
@@ -18,7 +19,7 @@ export function ProfilePage() {
   const zones = useZones(session?.token ?? null)
 
   return (
-    <section className="mx-auto max-w-sm">
+    <section className="mx-auto max-w-5xl">
       <PageHeader
         title="Mi perfil"
         description={profile?.role === 'WALKER' ? 'Tus datos, zonas de servicio y valores por defecto.' : 'Tus datos de contacto y zona.'}
@@ -32,6 +33,7 @@ export function ProfilePage() {
         </div>
       )}
       {profile && (
+        <div className={profile.role === 'WALKER' ? 'grid items-start gap-6 lg:grid-cols-2' : 'max-w-xl'}>
         <ProfileForm
           profile={profile}
           zones={zones.zones}
@@ -40,6 +42,8 @@ export function ProfilePage() {
             if (session) signIn({ ...session, user: { ...session.user, name: updated.fullName } })
           }}
         />
+        {profile.role === 'WALKER' && <CoverageEditor />}
+        </div>
       )}
     </section>
   )
@@ -84,7 +88,7 @@ function ProfileForm({ profile, zones, zonesLoading, onSaved }: ProfileFormProps
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="space-y-2">
         <span className={labelClass}>Email</span>
         <p className="text-slate-600">{profile.email}</p>
@@ -120,15 +124,6 @@ function ProfileForm({ profile, zones, zonesLoading, onSaved }: ProfileFormProps
       </div>
 
       <ZoneSelect zones={zones} value={zoneId} onChange={setZoneId} label="Barrio" disabled={zonesLoading} required />
-
-      {/* RN-08/RN-04: precio, cupo y zonas de cobertura se editan en la tarea de Paseadores y cobertura */}
-      {profile.role === 'WALKER' && (
-        <div className="space-y-1 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          <p>Precio por defecto: {profile.defaultPrice != null ? `$${profile.defaultPrice}` : 'sin definir'}</p>
-          <p>Cupo por defecto: {profile.defaultCapacity ?? 'sin definir'}</p>
-          <p>Calificación: {profile.reviewCount > 0 ? `${profile.ratingAvg} (${profile.reviewCount} reseñas)` : 'sin reseñas aún'}</p>
-        </div>
-      )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {success && <p className="text-sm text-emerald-700">Perfil actualizado.</p>}

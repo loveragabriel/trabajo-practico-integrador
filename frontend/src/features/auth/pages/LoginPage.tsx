@@ -5,13 +5,15 @@ import { login } from '@/features/auth/api/auth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { ApiRequestError } from '@/shared/api/client'
 import { PageHeader } from '@/shared/components/PageHeader'
-import type { Role } from '@/shared/types/user'
 
 export function LoginPage() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: Location } | null)?.from?.pathname ?? paths.home
+  const from = (location.state as { from?: Location } | null)?.from
+  const returnTo = from?.pathname.startsWith('/') && !from.pathname.startsWith('//')
+    ? { pathname: from.pathname, search: from.search, hash: from.hash }
+    : paths.home
 
   const emailId = useId()
   const passwordId = useId()
@@ -27,7 +29,7 @@ export function LoginPage() {
     try {
       const session = await login({ email, password })
       signIn(session)
-      navigate(from, { replace: true })
+      navigate(returnTo, { replace: true })
     } catch (err) {
       // el mensaje del backend queda en inglés para logs/debug; acá siempre mostramos español
       setError(
@@ -38,12 +40,6 @@ export function LoginPage() {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  // solo en desarrollo, hasta que exista el selector de zona público: permite recorrer las rutas protegidas
-  function devSignIn(role: Role) {
-    signIn({ token: 'dev', user: { id: 'dev', name: role === 'CLIENT' ? 'Cliente demo' : 'Paseador demo', role } })
-    navigate(from, { replace: true })
   }
 
   return (
@@ -98,17 +94,6 @@ export function LoginPage() {
         </button>
       </form>
 
-      {import.meta.env.DEV && (
-        <div className="mt-8 space-y-2 rounded-md border border-dashed border-amber-400 p-4">
-          <p className="text-sm text-amber-700">Acceso de desarrollo (no se incluye en el build)</p>
-          <button type="button" onClick={() => devSignIn('CLIENT')} className="block underline">
-            Entrar como cliente
-          </button>
-          <button type="button" onClick={() => devSignIn('WALKER')} className="block underline">
-            Entrar como paseador
-          </button>
-        </div>
-      )}
     </section>
   )
 }

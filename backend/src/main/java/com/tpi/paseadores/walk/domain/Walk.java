@@ -83,6 +83,22 @@ public class Walk {
         this.meetingPoint = meetingPoint;
     }
 
+    public void updateAvailability(long occupied) {
+        status = occupied >= capacity ? WalkStatus.FULL : WalkStatus.PUBLISHED;
+    }
+
+    public void cancel() {
+        status = WalkStatus.CANCELLED;
+    }
+
+    public void start() {
+        status = WalkStatus.IN_PROGRESS;
+    }
+
+    public void complete() {
+        status = WalkStatus.COMPLETED;
+    }
+
     public boolean isOwnedBy(UUID userId) {
         return walkerId.equals(userId);
     }

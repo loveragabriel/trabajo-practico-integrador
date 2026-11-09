@@ -136,7 +136,7 @@ export function PublishWalkPage() {
         ? <PublicationForm options={data} />
         : <div className="rounded-lg border border-slate-200 bg-white p-4">
           <p>Necesitás al menos un barrio de servicio para publicar un paseo.</p>
-          <Link to={paths.profile} className="mt-2 inline-block font-medium text-emerald-700 underline">Ver mi perfil</Link>
+          <Link to={`${paths.profile}#cobertura`} className="mt-2 inline-block font-medium text-emerald-700 underline">Configurar cobertura</Link>
         </div>)}
     </section>
   )

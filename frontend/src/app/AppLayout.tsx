@@ -24,7 +24,7 @@ const navByRole: Record<Role, NavItem[]> = {
 const guestNav: NavItem[] = [{ to: paths.walks, label: 'Buscar paseos' }]
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return isActive ? 'font-semibold text-emerald-700' : 'text-slate-600 hover:text-slate-900'
+  return isActive ? 'font-semibold text-emerald-800 underline decoration-2 underline-offset-4' : 'text-slate-600 hover:text-slate-900'
 }
 
 export function AppLayout() {
@@ -33,13 +33,14 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <a href="#contenido" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-3">Ir al contenido</a>
       <header className="border-b border-slate-200 bg-white">
-        <nav className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+        <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link to={paths.home} className="text-lg font-bold text-emerald-700">
             Paseadores
           </Link>
 
-          <ul className="flex flex-wrap gap-4">
+          <ul className="order-last flex w-full flex-wrap gap-x-4 gap-y-2 text-sm sm:order-none sm:w-auto">
             {items.map((item) => (
               <li key={item.to}>
                 {/* end: que "Mis paseos" no quede activo dentro de "Publicar paseo" */}
@@ -50,7 +51,7 @@ export function AppLayout() {
             ))}
           </ul>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center gap-3 text-sm">
             {session ? (
               <>
                 <NavLink to={paths.profile} className={navLinkClass}>
@@ -77,7 +78,7 @@ export function AppLayout() {
         </nav>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main id="contenido" className="mx-auto max-w-6xl px-4 py-8">
         <Outlet />
       </main>
     </div>

@@ -37,6 +37,12 @@ public class UserService {
     }
 
     @Transactional
+    public User lockForUpdate(UUID id) {
+        return userRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
+    }
+
+    @Transactional
     public User create(User user) {
         return userRepository.save(user);
     }

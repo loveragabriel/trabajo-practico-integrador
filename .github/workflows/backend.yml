@@ -14,6 +14,26 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: paseadores
+          POSTGRES_USER: paseadores
+          POSTGRES_PASSWORD: paseadores-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U paseadores -d paseadores"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+    env:
+      TPI_DB_TESTS: "true"
+      DB_URL: jdbc:postgresql://localhost:5432/paseadores
+      DB_USER: paseadores
+      DB_PASSWORD: paseadores-ci
+      JWT_SECRET: paseadores-ci-clave-desechable-pruebas
     defaults:
       run:
         working-directory: backend
@@ -24,5 +44,4 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      # unit, web and architecture tests; database tests stay skipped (they need TPI_DB_TESTS=true)
       - run: ./mvnw -B test

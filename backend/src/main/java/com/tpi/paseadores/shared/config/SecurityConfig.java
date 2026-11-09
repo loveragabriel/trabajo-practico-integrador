@@ -36,6 +36,9 @@ public class SecurityConfig {
             // .cors(cors -> cors.configurationSource(corsConfigurationSource())) // enable once the frontend is wired up
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.svg",
+                        "/login", "/register", "/profile", "/walks", "/walks/*", "/walkers/*",
+                        "/pets", "/pets/new", "/pets/*/edit", "/bookings", "/my-walks", "/my-walks/new").permitAll()
                 // /error must stay open: an unmapped path forwards here, and without this
                 // a genuine 404 gets masked as 403 by the auth check below
                 .requestMatchers("/api/auth/**", "/error").permitAll()

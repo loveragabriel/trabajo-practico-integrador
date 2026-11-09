@@ -62,12 +62,13 @@ function FitToZones({ located }: { located: LocatedZone[] }) {
   const map = useMap()
 
   useEffect(() => {
+    map.stop()
     if (located.length === 0) {
-      map.setView(CABA_CENTER, CABA_ZOOM)
+      map.setView(CABA_CENTER, CABA_ZOOM, { animate: false })
     } else if (located.length === 1) {
-      map.setView(located[0].position, SINGLE_ZONE_ZOOM)
+      map.setView(located[0].position, SINGLE_ZONE_ZOOM, { animate: false })
     } else {
-      map.fitBounds(latLngBounds(located.map(({ position }) => [position.lat, position.lng])), { padding: [24, 24] })
+      map.fitBounds(latLngBounds(located.map(({ position }) => [position.lat, position.lng])), { padding: [24, 24], animate: false })
     }
   }, [map, located])
 

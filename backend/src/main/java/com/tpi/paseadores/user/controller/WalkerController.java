@@ -35,7 +35,6 @@ public class WalkerController {
         return service.updateOwnCoverage(UUID.fromString(userId), request);
     }
 
-    // público: cualquiera puede ver el perfil de un paseador antes de registrarse
     @GetMapping("/{id}")
     public WalkerPublicProfileResponse getPublicProfile(@PathVariable UUID id) {
         return service.getPublicProfile(id);

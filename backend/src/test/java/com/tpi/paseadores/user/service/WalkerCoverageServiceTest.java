@@ -86,17 +86,18 @@ class WalkerCoverageServiceTest {
         User walker = walker(UUID.randomUUID(), true);
         UUID zoneId = UUID.randomUUID();
         when(userRepository.findById(walker.getId())).thenReturn(Optional.of(walker));
+        when(userRepository.findByIdForUpdate(walker.getId())).thenReturn(Optional.of(walker));
         when(zoneService.existsById(zoneId)).thenReturn(true);
-        // simula lo que quedaría en walker_zones tras el deleteAll + saveAll de este método
+        var old = new WalkerZone(walker.getId(), UUID.randomUUID());
         when(walkerZoneRepository.findAllByWalkerId(walker.getId()))
-                .thenReturn(List.of(new WalkerZone(walker.getId(), zoneId)));
+                .thenReturn(List.of(old), List.of(new WalkerZone(walker.getId(), zoneId)));
         when(zoneService.findAllById(List.of(zoneId)))
                 .thenReturn(List.of(new ZoneResponse(zoneId, "Almagro", "Buenos Aires")));
 
         WalkerCoverageResponse response = service.updateOwnCoverage(walker.getId(),
                 new WalkerCoverageRequest(new BigDecimal("3000"), 5, List.of(zoneId)));
 
-        verify(walkerZoneRepository).deleteAllByWalkerId(walker.getId());
+        verify(walkerZoneRepository).deleteAll(List.of(old));
         ArgumentCaptor<List<WalkerZone>> captor = ArgumentCaptor.forClass(List.class);
         verify(walkerZoneRepository).saveAll(captor.capture());
         assertThat(captor.getValue()).extracting(WalkerZone::getZoneId).containsExactly(zoneId);
@@ -110,13 +111,14 @@ class WalkerCoverageServiceTest {
         User walker = walker(UUID.randomUUID(), true);
         UUID unknownZoneId = UUID.randomUUID();
         when(userRepository.findById(walker.getId())).thenReturn(Optional.of(walker));
+        when(userRepository.findByIdForUpdate(walker.getId())).thenReturn(Optional.of(walker));
         when(zoneService.existsById(unknownZoneId)).thenReturn(false);
 
         assertThatThrownBy(() -> service.updateOwnCoverage(walker.getId(),
                 new WalkerCoverageRequest(null, null, List.of(unknownZoneId))))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Zone not found");
-        verify(walkerZoneRepository, never()).deleteAllByWalkerId(walker.getId());
+        verify(walkerZoneRepository, never()).deleteAll(anyList());
         verify(walkerZoneRepository, never()).saveAll(anyList());
     }
 

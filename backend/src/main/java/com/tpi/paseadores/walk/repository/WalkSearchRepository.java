@@ -1,6 +1,7 @@
 package com.tpi.paseadores.walk.repository;
 
 import com.tpi.paseadores.walk.domain.WalkStatus;
+import com.tpi.paseadores.walk.dto.BookingResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
 import com.tpi.paseadores.walk.dto.WalkSearchFilters;
@@ -60,6 +61,10 @@ public class WalkSearchRepository {
     }
 
     public List<WalkSearchResponse> findAvailable(WalkSearchFilters filters, LocalDateTime now) {
+        return findAvailable(filters, now, null);
+    }
+
+    public List<WalkSearchResponse> findAvailable(WalkSearchFilters filters, LocalDateTime now, UUID walkerId) {
         StringBuilder sql = new StringBuilder("""
                 SELECT w.id, w.zone_id, z.name AS zone_name, w.start_time, w.duration_minutes,
                        w.meeting_point, w.price_per_pet, w.capacity,
@@ -79,6 +84,10 @@ public class WalkSearchRepository {
         var params = new MapSqlParameterSource("now", Timestamp.valueOf(now))
                 .addValue("limit", filters.size() + 1)
                 .addValue("offset", (long) filters.page() * filters.size());
+        if (walkerId != null) {
+            sql.append(" AND w.walker_id = :walkerId");
+            params.addValue("walkerId", walkerId);
+        }
         if (filters.zoneId() != null) {
             sql.append(" AND w.zone_id = :zoneId");
             params.addValue("zoneId", filters.zoneId());
@@ -112,6 +121,40 @@ public class WalkSearchRepository {
                 .addValue("offset", (long) page * size);
         return jdbc.query(DETAIL_SELECT + " WHERE w.walker_id = :walkerId" + condition
                 + " ORDER BY w.start_time" + order + ", w.id LIMIT :limit OFFSET :offset", params, DETAIL_ROW_MAPPER);
+    }
+
+    public List<BookingResponse> findBookings(UUID ownerId, UUID walkId, LocalDateTime now, int page, int size) {
+        var params = new MapSqlParameterSource("ownerId", ownerId).addValue("now", Timestamp.valueOf(now))
+                .addValue("cancelUntil", Timestamp.valueOf(now.plusHours(2)))
+                .addValue("limit", size).addValue("offset", (long) page * size);
+        String sql = """
+                SELECT b.id, b.walk_id, b.pet_id, p.name AS pet_name, u.full_name, z.name AS zone_name,
+                       w.start_time, w.end_time, b.status AS booking_status, w.status AS walk_status,
+                       b.status = 'JOINED' AND w.status IN ('PUBLISHED','FULL')
+                           AND w.start_time >= :cancelUntil AS can_cancel
+                FROM walk_pets b
+                JOIN pets p ON p.id = b.pet_id
+                JOIN walks w ON w.id = b.walk_id
+                JOIN users u ON u.id = w.walker_id
+                JOIN zones z ON z.id = w.zone_id
+                WHERE p.owner_id = :ownerId
+                """;
+        if (walkId != null) {
+            sql += " AND b.walk_id = :walkId";
+            params.addValue("walkId", walkId);
+        }
+        return jdbc.query(sql + """
+                 ORDER BY CASE WHEN b.status = 'JOINED' AND w.status IN ('PUBLISHED','FULL','IN_PROGRESS')
+                                    AND w.end_time > :now THEN 0 ELSE 1 END,
+                          CASE WHEN b.status = 'JOINED' AND w.status IN ('PUBLISHED','FULL','IN_PROGRESS')
+                                    AND w.end_time > :now THEN w.start_time END ASC,
+                          w.start_time DESC, b.id
+                 LIMIT :limit OFFSET :offset
+                """, params, (rs, row) -> new BookingResponse(rs.getObject("id", UUID.class),
+                rs.getObject("walk_id", UUID.class), rs.getObject("pet_id", UUID.class),
+                rs.getString("pet_name"), rs.getString("full_name"), rs.getString("zone_name"),
+                rs.getObject("start_time", LocalDateTime.class), rs.getObject("end_time", LocalDateTime.class),
+                rs.getString("booking_status"), rs.getString("walk_status"), rs.getBoolean("can_cancel")));
     }
 
     public boolean hasActivePet(UUID walkId, UUID ownerId) {

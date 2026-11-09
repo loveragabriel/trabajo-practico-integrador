@@ -55,7 +55,7 @@ class WalkServiceTest {
     void setUp() {
         Clock caba = Clock.fixed(Instant.parse("2030-06-01T13:00:00Z"), ZoneId.of("America/Argentina/Buenos_Aires"));
         now = LocalDateTime.now(caba);
-        service = new WalkService(walks, searchRepository, coverage, users, caba);
+        service = new WalkService(walks, searchRepository, coverage, users, caba, null, null);
     }
 
     // --- crear ---------------------------------------------------------------------------------

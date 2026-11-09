@@ -1,6 +1,7 @@
 package com.tpi.paseadores.user.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -10,8 +11,8 @@ import java.util.UUID;
 
 // reemplaza el conjunto completo de zonas de cobertura, no un alta/baja incremental
 public record WalkerCoverageRequest(
-        @DecimalMin(value = "0", message = "must not be negative") BigDecimal defaultPrice,
+        @DecimalMin(value = "0", message = "must not be negative") @Digits(integer = 8, fraction = 2) BigDecimal defaultPrice,
         @Positive Integer defaultCapacity,
-        @NotNull List<UUID> zoneIds
+        @NotNull List<@NotNull UUID> zoneIds
 ) {
 }

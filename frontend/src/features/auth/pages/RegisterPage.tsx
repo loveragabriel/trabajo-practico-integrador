@@ -54,8 +54,7 @@ export function RegisterPage() {
         defaultCapacity: role === 'WALKER' && defaultCapacity ? Number(defaultCapacity) : undefined,
       })
       signIn(session)
-      // TODO: mostrar un modal de bienvenida acá antes de navegar ("Cuenta creada, ya podés gestionar tus paseos")
-      navigate(paths.home, { replace: true })
+      navigate(role === 'WALKER' ? `${paths.profile}#cobertura` : paths.pets, { replace: true })
     } catch (err) {
       // el mensaje del backend queda en inglés para logs/debug; acá siempre mostramos español
       setError(

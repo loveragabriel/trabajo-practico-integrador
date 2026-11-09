@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.HashSet;
 import java.util.UUID;
 
 // public API of the walker coverage feature (RN-04/RN-08): default price/capacity and service zones
@@ -36,8 +37,11 @@ public class WalkerCoverageService {
     // RN-08: solo un paseador edita su propia cobertura; reemplaza el conjunto completo de zonas
     @Transactional
     public WalkerCoverageResponse updateOwnCoverage(UUID walkerId, WalkerCoverageRequest request) {
-        User walker = activeWalker(walkerId);
-        for (UUID zoneId : request.zoneIds()) {
+        activeWalker(walkerId);
+        User walker = userRepository.findByIdForUpdate(walkerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paseador no encontrado."));
+        var requested = new HashSet<>(request.zoneIds());
+        for (UUID zoneId : requested) {
             if (!zoneService.existsById(zoneId)) {
                 throw new ResourceNotFoundException("Zone not found");
             }
@@ -46,8 +50,10 @@ public class WalkerCoverageService {
         walker.setDefaultPrice(request.defaultPrice());
         walker.setDefaultCapacity(request.defaultCapacity());
 
-        walkerZoneRepository.deleteAllByWalkerId(walkerId);
-        walkerZoneRepository.saveAll(request.zoneIds().stream().map(zoneId -> new WalkerZone(walkerId, zoneId)).toList());
+        var existing = walkerZoneRepository.findAllByWalkerId(walkerId);
+        walkerZoneRepository.deleteAll(existing.stream().filter(zone -> !requested.contains(zone.getZoneId())).toList());
+        existing.forEach(zone -> requested.remove(zone.getZoneId()));
+        walkerZoneRepository.saveAll(requested.stream().map(zoneId -> new WalkerZone(walkerId, zoneId)).toList());
 
         return new WalkerCoverageResponse(walker.getDefaultPrice(), walker.getDefaultCapacity(), zonesOf(walkerId));
     }
@@ -60,7 +66,6 @@ public class WalkerCoverageService {
                 .anyMatch(wz -> wz.getZoneId().equals(zoneId));
     }
 
-    // consulta pública, sin datos de contacto: cualquiera puede ver el perfil de un paseador activo
     @Transactional(readOnly = true)
     public WalkerPublicProfileResponse getPublicProfile(UUID walkerId) {
         User walker = userRepository.findById(walkerId)

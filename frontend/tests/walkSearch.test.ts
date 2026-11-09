@@ -23,7 +23,7 @@ for (const query of ['page=-1', 'page=1.5', 'page=2147483648', 'zoneId=Palermo',
   })
 }
 
-test('consulta la API pública con filtros codificados, límite y cancelación', async () => {
+test('consulta la búsqueda protegida con token, filtros y cancelación', async () => {
   const controller = new AbortController()
   globalThis.fetch = async (url, options) => {
     const parsed = new URL(String(url), 'http://localhost')
@@ -31,11 +31,11 @@ test('consulta la API pública con filtros codificados, límite y cancelación',
     assert.equal(parsed.searchParams.get('zoneId'), id)
     assert.equal(parsed.searchParams.get('startsFrom'), filters.startsFrom)
     assert.equal(parsed.searchParams.get('size'), '12')
-    assert.deepEqual(options?.headers, { Accept: 'application/json' })
+    assert.deepEqual(options?.headers, { Accept: 'application/json', Authorization: 'Bearer token-de-prueba' })
     assert.equal(options?.signal, controller.signal)
     return Response.json({ items: [walk], page: 0, size: 12, hasNext: false })
   }
-  assert.equal((await loadWalks(filters, controller.signal)).items[0]?.availableSpots, 2)
+  assert.equal((await loadWalks(filters, controller.signal, 'token-de-prueba')).items[0]?.availableSpots, 2)
 })
 
 test('acepta búsquedas vacías sin fabricar resultados', async () => {

@@ -73,7 +73,7 @@ Lo que no pertenece a un módulo va en `app` (ruteo, layout, inicio y 404) o en 
 - Cada mascota ocupa un cupo; un dueño con varias mascotas genera varias filas. Solo se reserva en un paseo publicado, futuro y con lugar.
 - Comprueba propiedad de la mascota y capacidad dentro de una transacción con bloqueo del paseo. Para varias mascotas, la operación es atómica.
 - La combinación paseo/mascota es única. Reactivar una cancelación actualiza la misma fila y vuelve a comprobar disponibilidad.
-- Un dueño cancela su reserva antes del inicio; al cancelar se libera cupo. No existe estado «pendiente de aceptación».
+- Un dueño puede cancelar su reserva hasta dos horas antes del inicio; al cancelar se libera cupo. No existe estado «pendiente de aceptación».
 - Depende de paseos, mascotas y autenticación. Criterio de aceptación: con un único lugar libre, dos reservas concurrentes no pueden confirmarse ambas.
 
 ### 8. Búsqueda

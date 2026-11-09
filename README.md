@@ -25,7 +25,7 @@ A web application that connects pet owners with dog walkers in the City of Bueno
 
 ## Purpose
 
-The City of Buenos Aires is undergoing a structural demographic shift: its pet population now far exceeds its child population (493,676 dogs and 368,176 cats compared to 460,696 children under 14, according to INDEC 2022). This has driven growing demand for dog walking services, yet coordination between owners and walkers is still handled informally today like WhatsApp, social media with no system to centralize availability, coverage area, and scheduling.
+Dog owners in Buenos Aires often coordinate walks through messages and social networks. The project brings available walks, service neighborhoods, meeting points and reservations together in one place.
 
 This project is looking for replacing that informal coordination with a centralized, reliable platform.
 
@@ -107,22 +107,20 @@ Each row is a client's booking of one pet into a published walk: it carries its 
 
 ## Installation and Setup
 
-> ⚠️ Section to be completed 
+Use Docker Compose to start the web app and PostgreSQL together:
 
 ```bash
-# Backend
-cd backend
-./mvnw spring-boot:run
-
-# Frontend (requires Node.js and pnpm)
-cd frontend
-pnpm install
-pnpm dev        # http://localhost:5173
+cp .env.example .env
+# Set DB_PASSWORD and JWT_SECRET in .env, then run:
+docker compose up --build
 ```
 
-Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
+Open <http://localhost:8080>. Swagger is at <http://localhost:8080/swagger-ui/index.html>. Flyway creates the schema and loads the neighborhood catalog. For Java 21 and Vite without Docker, see [Ejecución local](docs/ejecucion-local.md).
 
-In development, the Vite dev server proxies `/api` requests to the backend at `http://localhost:8080`.
+- [Contratos de la API](docs/api-entrega.md)
+- [Validación y recorrido de demostración](docs/validacion-entrega.md)
+- [Guía de despliegue](docs/despliegue.md)
+- [Informe del proyecto](docs/informe-final-paseadores.pdf)
 
 ## Repository Structure
 
@@ -157,6 +155,6 @@ trabajo-practico-integrador/
 | Milestone | Deadline | Status |
 |---|---|---|
 | 1st Delivery — Proposal + Repository | 08/30/2026 | ✅ |
-| 2nd Delivery — DB design and modules | 09/27/2026 | 🔄 In progress |
-| Final Delivery — Report, video, and deployment | 11/11/2026 | ⏳ Pending |
+| 2nd Delivery — DB design and modules | 09/27/2026 | ✅ |
+| Final Delivery — Report, video, and deployment | 11/11/2026 | Review candidate; public deployment and video pending |
 | Oral Defense | Exam board | ⏳ Pending |

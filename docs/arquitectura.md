@@ -47,6 +47,6 @@ imports usan el alias `@/` (`src/`).
 - Spring Security valida JWT; el ID y rol del actor surgen del contexto autenticado. No confiar en `owner_id` o `author_id` enviados por el navegador para autorizar acciones.
 - Guardar contraseñas mediante hash BCrypt; no devolver `password_hash` en DTOs. Dirección y teléfono no se incluyen automáticamente en perfiles públicos.
 - Los servicios validan usuario activo, rol, propiedad de mascotas y titularidad de paseos. El frontend mejora la experiencia, pero no sustituye la autorización del backend.
-- Para reservar/cancelar, bloquear la fila del paseo en la transacción antes de comprobar cupo y modificar reservas. Para publicar/cambiar horarios, serializar por paseador bloqueando su fila de usuario antes de comprobar solapamientos. Todos los caminos de escritura deberán respetar esas convenciones.
+- Para reservar/cancelar, bloquear la fila del paseo en la transacción antes de comprobar cupo y modificar reservas. Para publicar/cambiar horarios, serializar por paseador con un bloqueo transaccional de PostgreSQL antes de comprobar solapamientos. Todos los caminos de escritura deberán respetar esas convenciones.
 - Un error de validación o autorización no deja escrituras parciales. Las respuestas de error usan un formato uniforme, sin exponer credenciales.
 - Las fechas `timestamp` del esquema representan hora local de CABA. Backend, conexión y frontend deben usar consistentemente `America/Argentina/Buenos_Aires`. Una expansión a otras zonas horarias exigirá revisar este diseño.

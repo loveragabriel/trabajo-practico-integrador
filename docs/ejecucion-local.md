@@ -69,7 +69,7 @@ pnpm dev
 
 Abrimos `http://localhost:5173`. Para revisar directamente la búsqueda, usamos `http://localhost:5173/walks`.
 
-Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda puede abrirse sin sesión. Si no hay paseos publicados en la base, veremos una lista vacía. Para crear uno seguimos [Publicación de paseos](publicacion-paseos.md); las reservas siguen pendientes.
+Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda pide iniciar sesión. Si no hay paseos publicados con lugar en el barrio elegido, veremos una lista vacía. Para crear un paseo y reservar con una mascota, seguimos el [recorrido de validación](validacion-entrega.md).
 
 ## Comprobar la API
 

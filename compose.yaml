@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: paseadores
+      POSTGRES_USER: paseadores
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Definí DB_PASSWORD en el archivo .env}
+    volumes:
+      - paseadores_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paseadores -d paseadores"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/paseadores
+      DB_USER: paseadores
+      DB_PASSWORD: ${DB_PASSWORD:?Definí DB_PASSWORD en el archivo .env}
+      JWT_SECRET: ${JWT_SECRET:?Definí JWT_SECRET en el archivo .env}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  paseadores_db:
