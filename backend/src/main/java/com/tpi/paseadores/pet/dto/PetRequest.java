@@ -1,6 +1,6 @@
 package com.tpi.paseadores.pet.dto;
 
-import com.tpi.paseadores.pet.PetSize;
+import com.tpi.paseadores.pet.domain.PetSize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 

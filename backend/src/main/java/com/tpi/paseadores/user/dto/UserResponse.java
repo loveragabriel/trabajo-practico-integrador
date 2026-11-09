@@ -1,7 +1,7 @@
 package com.tpi.paseadores.user.dto;
 
-import com.tpi.paseadores.user.User;
-import com.tpi.paseadores.user.UserRole;
+import com.tpi.paseadores.user.domain.User;
+import com.tpi.paseadores.user.domain.UserRole;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.tpi.paseadores.user.dto;
 
-import com.tpi.paseadores.zone.ZoneResponse;
+import com.tpi.paseadores.zone.dto.ZoneResponse;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -13,7 +13,6 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import jakarta.persistence.Entity;
 import org.springframework.data.repository.Repository;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,24 +41,25 @@ class ArchitectureTest {
     static final ArchRule repositories_only_used_within_their_feature =
             classes().should(onlyUseRepositoriesOfTheirOwnFeature());
 
-    // controller -> service -> repository: a controller never skips the service layer
+    // controller -> service -> repository: a controller never skips the service layer, and the
+    // API speaks DTOs only, so it never reaches into ..domain.. (where JPA entities live) either
     @ArchTest
-    static final ArchRule controllers_do_not_use_repositories =
-            noClasses().that().areAnnotatedWith(RestController.class)
-                    .should().dependOnClassesThat(REPOSITORY);
-
-    // the API speaks DTOs only: JPA entities never reach a controller
-    @ArchTest
-    static final ArchRule controllers_do_not_use_entities =
-            noClasses().that().areAnnotatedWith(RestController.class)
-                    .should().dependOnClassesThat().areAnnotatedWith(Entity.class);
+    static final ArchRule controllers_do_not_use_repositories_or_domain =
+            noClasses().that().resideInAPackage("..controller..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..repository..", "..domain..");
 
     // services know nothing about HTTP (no ResponseEntity, no HttpServletRequest)
     @ArchTest
     static final ArchRule services_do_not_know_http =
-            noClasses().that().haveSimpleNameEndingWith("Service")
+            noClasses().that().resideInAPackage("..service..")
                     .should().dependOnClassesThat()
                     .resideInAnyPackage("org.springframework.http..", "org.springframework.web..", "jakarta.servlet..");
+
+    // JPA entities only live in ..domain..: that's the one place a layer is allowed to touch them
+    @ArchTest
+    static final ArchRule entities_only_live_in_domain =
+            classes().that().areAnnotatedWith(Entity.class)
+                    .should().resideInAPackage("..domain..");
 
     // shared is the base every feature builds on, so it can't depend on any of them
     @ArchTest

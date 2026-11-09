@@ -1,6 +1,6 @@
 package com.tpi.paseadores.auth.dto;
 
-import com.tpi.paseadores.user.User;
+import com.tpi.paseadores.user.domain.User;
 
 import java.util.UUID;
 

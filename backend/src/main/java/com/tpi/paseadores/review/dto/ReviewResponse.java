@@ -1,6 +1,6 @@
 package com.tpi.paseadores.review.dto;
 
-import com.tpi.paseadores.review.Review;
+import com.tpi.paseadores.review.domain.Review;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

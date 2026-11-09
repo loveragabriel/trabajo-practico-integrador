@@ -1,7 +1,7 @@
 package com.tpi.paseadores.pet.dto;
 
-import com.tpi.paseadores.pet.Pet;
-import com.tpi.paseadores.pet.PetSize;
+import com.tpi.paseadores.pet.domain.Pet;
+import com.tpi.paseadores.pet.domain.PetSize;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

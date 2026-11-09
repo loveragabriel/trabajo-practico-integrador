@@ -23,9 +23,6 @@ export const router = createBrowserRouter([
     children: [
       // públicas
       { path: paths.home, element: <HomePage /> },
-      { path: paths.walks, element: <WalkSearchPage /> },
-      { path: paths.walkDetail, element: <WalkDetailPage /> },
-      { path: paths.walkerProfile, element: <WalkerProfilePage /> },
 
       // solo sin sesión
       {
@@ -36,10 +33,16 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // cualquier usuario autenticado
+      // cualquier usuario autenticado: ver paseos y perfiles de paseador requiere cuenta
+      // (GET /api/walks y GET /api/walkers/{id} ya no son públicos en el backend)
       {
         element: <RequireAuth />,
-        children: [{ path: paths.profile, element: <ProfilePage /> }],
+        children: [
+          { path: paths.profile, element: <ProfilePage /> },
+          { path: paths.walks, element: <WalkSearchPage /> },
+          { path: paths.walkDetail, element: <WalkDetailPage /> },
+          { path: paths.walkerProfile, element: <WalkerProfilePage /> },
+        ],
       },
 
       // CLIENT
