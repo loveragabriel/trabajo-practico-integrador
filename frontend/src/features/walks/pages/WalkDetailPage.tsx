@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth'
 import { bookingError, joinWalk } from '@/features/bookings/api/bookings'
 import { ZoneCoverageMap, useZones } from '@/features/map'
 import { loadMyPets, type Pet } from '@/features/pets/api/pets'
+import { WalkReviewsSection } from '@/features/reviews/components/WalkReviewsSection'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { formatWalkDate } from '../api/search'
 import { walkStatusLabels, type WalkDetails } from '../api/walkReadContract'
@@ -128,6 +129,9 @@ export function WalkDetailPage() {
             : <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
                 {walk.status === 'FULL' ? 'Este paseo ya no tiene lugares disponibles.' : 'Este paseo ya no admite inscripciones.'}
               </p>
+        )}
+        {walk.status === 'COMPLETED' && (
+          <WalkReviewsSection walkId={walk.id} canReview={!ownWalk && session.user.role === 'CLIENT'} />
         )}
       </>}
     </section>
