@@ -1,6 +1,6 @@
 import type { Zone } from '@/features/map'
 import { apiClient, ApiRequestError } from '@/shared/api/client'
-import { validWalkId } from './walkReadContract'
+import { isWalkDetails, validWalkId, type WalkDetails } from './walkReadContract'
 
 export interface WalkPublicationOptions {
   defaultPrice: number | null
@@ -33,10 +33,10 @@ export async function loadWalkPublicationOptions(signal: AbortSignal): Promise<W
   return data
 }
 
-export async function publishWalk(request: WalkPublicationRequest): Promise<string> {
-  const { data } = await apiClient.post<{ id: string }>('/walks', request)
-  if (!data || !validWalkId(data.id)) {
+export async function publishWalk(request: WalkPublicationRequest): Promise<WalkDetails> {
+  const { data } = await apiClient.post<WalkDetails>('/walks', request)
+  if (!isWalkDetails(data)) {
     throw new Error('No pudimos confirmar la publicación. Revisá Mis paseos antes de volver a enviarla.')
   }
-  return data.id
+  return data
 }

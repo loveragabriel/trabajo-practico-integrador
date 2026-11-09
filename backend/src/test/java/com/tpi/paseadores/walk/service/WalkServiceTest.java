@@ -14,7 +14,6 @@ import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkCreateRequest;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
 import com.tpi.paseadores.walk.dto.WalkSearchFilters;
-import com.tpi.paseadores.walk.dto.WalkSearchResponse;
 import com.tpi.paseadores.walk.repository.WalkRepository;
 import com.tpi.paseadores.walk.repository.WalkSearchRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +39,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class WalkServiceTest {
     @Mock WalkRepository walks;
+    @Mock WalkPetService walkPets;
     @Mock WalkSearchRepository searchRepository;
     @Mock WalkerCoverageService coverage;
     @Mock UserService users;
@@ -55,7 +55,7 @@ class WalkServiceTest {
     void setUp() {
         Clock caba = Clock.fixed(Instant.parse("2030-06-01T13:00:00Z"), ZoneId.of("America/Argentina/Buenos_Aires"));
         now = LocalDateTime.now(caba);
-        service = new WalkService(walks, searchRepository, coverage, users, caba);
+        service = new WalkService(walks, walkPets, searchRepository, coverage, users, caba);
     }
 
     // --- crear ---------------------------------------------------------------------------------
@@ -70,6 +70,10 @@ class WalkServiceTest {
             ReflectionTestUtils.setField(walk, "id", id);
             return walk;
         });
+        var created = new WalkReadResponse(id, zone, "Palermo", start, start.plusMinutes(45),
+                45, "Entrada de la plaza", new BigDecimal("2500.50"), 3, 0, 3, WalkStatus.PUBLISHED,
+                new WalkReadResponse.WalkerSummary(walker, "Paseador", BigDecimal.ZERO, 0));
+        when(searchRepository.findVisibleDetail(id)).thenReturn(Optional.of(created));
 
         assertThat(service.create(walker, request(zone, start, 45)).id()).isEqualTo(id);
         var order = inOrder(walks, coverage);
@@ -133,9 +137,9 @@ class WalkServiceTest {
     @Test
     void searchUsesCabaTimeAndKeepsOnlyTheRequestedPage() {
         var filters = new WalkSearchFilters(zone, null, null, 0, 1);
-        var row = new WalkSearchResponse(UUID.randomUUID(), zone, "Palermo", now.plusDays(1),
-                60, "Entrada de la plaza", BigDecimal.TEN, 4, 3,
-                new WalkSearchResponse.WalkerSummary(UUID.randomUUID(), "Paseador", BigDecimal.ZERO, 0));
+        var row = new WalkReadResponse(UUID.randomUUID(), zone, "Palermo", now.plusDays(1), now.plusDays(1).plusHours(1),
+                60, "Entrada de la plaza", BigDecimal.TEN, 4, 1, 3, WalkStatus.PUBLISHED,
+                new WalkReadResponse.WalkerSummary(UUID.randomUUID(), "Paseador", BigDecimal.ZERO, 0));
         when(searchRepository.findAvailable(filters, now)).thenReturn(List.of(row, row));
         var result = service.search(actorId, filters);
         assertThat(result.items()).containsExactly(row);
@@ -270,6 +274,91 @@ class WalkServiceTest {
         actor(UserRole.CLIENT, true);
         when(searchRepository.findVisibleDetail(walkId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.getById(actorId, walkId)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // --- updateStatus -------------------------------------------------------------------------------
+    // join/cancelBooking/myBookings viven en BookingService (ver BookingServiceTest); acá solo
+    // queda el ciclo de vida propio del Walk.
+
+    @Test
+    void cancellingAWalkCancelsAllJoinedBookingsInTheSameCall() {
+        Walk walk = walk(WalkStatus.PUBLISHED, 3, now.plusHours(3));
+        walkOwner(walk);
+
+        service.updateStatus(walker, walkId, WalkStatus.CANCELLED);
+
+        verify(walkPets).cancelAllJoined(walkId);
+        assertThat(walk.getStatus()).isEqualTo(WalkStatus.CANCELLED);
+    }
+
+    @Test
+    void rejectsStartingAWalkWithNoBookings() {
+        Walk walk = walk(WalkStatus.PUBLISHED, 3, now.plusHours(3));
+        walkOwner(walk);
+        when(walkPets.hasAnyJoined(walkId)).thenReturn(false);
+        assertThatThrownBy(() -> service.updateStatus(walker, walkId, WalkStatus.IN_PROGRESS))
+                .isInstanceOf(BusinessRuleViolationException.class);
+        assertThat(walk.getStatus()).isEqualTo(WalkStatus.PUBLISHED);
+    }
+
+    @Test
+    void cantCompleteAWalkThatNeverStarted() {
+        // RN-29: COMPLETED solo puede venir de IN_PROGRESS. Esto es justo lo que la rama de
+        // referencia no validaba (dejaba completar un PUBLISHED/FULL directamente).
+        Walk walk = walk(WalkStatus.PUBLISHED, 3, now.plusHours(3));
+        walkOwner(walk);
+        assertThatThrownBy(() -> service.updateStatus(walker, walkId, WalkStatus.COMPLETED))
+                .isInstanceOf(BusinessRuleViolationException.class);
+        assertThat(walk.getStatus()).isEqualTo(WalkStatus.PUBLISHED);
+    }
+
+    @Test
+    void completesAWalkThatIsInProgress() {
+        Walk walk = walk(WalkStatus.IN_PROGRESS, 3, now.plusHours(3));
+        walkOwner(walk);
+        service.updateStatus(walker, walkId, WalkStatus.COMPLETED);
+        assertThat(walk.getStatus()).isEqualTo(WalkStatus.COMPLETED);
+    }
+
+    @Test
+    void rejectsForcingTheAutomaticStatuses() {
+        for (WalkStatus target : List.of(WalkStatus.PUBLISHED, WalkStatus.FULL)) {
+            assertThatThrownBy(() -> service.updateStatus(walker, walkId, target))
+                    .isInstanceOf(InvalidFieldException.class);
+        }
+        verifyNoInteractions(walks);
+    }
+
+    @Test
+    void onlyTheOwningWalkerCanChangeStatus() {
+        actor(UserRole.WALKER, true);
+        when(walks.findByIdForUpdate(walkId)).thenReturn(Optional.of(walk(WalkStatus.PUBLISHED, 3, now.plusHours(3))));
+        assertThatThrownBy(() -> service.updateStatus(actorId, walkId, WalkStatus.CANCELLED))
+                .isInstanceOf(ForbiddenActionException.class);
+    }
+
+    @Test
+    void clientsCannotChangeWalkStatus() {
+        actor(UserRole.CLIENT, true);
+        assertThatThrownBy(() -> service.updateStatus(actorId, walkId, WalkStatus.CANCELLED))
+                .isInstanceOf(ForbiddenActionException.class);
+        verifyNoInteractions(walks);
+    }
+
+    private void walkOwner(Walk walk) {
+        User user = new User();
+        user.setId(walker);
+        user.setRole(UserRole.WALKER);
+        user.setActive(true);
+        when(users.findById(walker)).thenReturn(Optional.of(user));
+        when(walks.findByIdForUpdate(walkId)).thenReturn(Optional.of(walk));
+    }
+
+    private Walk walk(WalkStatus status, int capacity, LocalDateTime startTime) {
+        Walk walk = new Walk(walker, zone, startTime, 60, capacity, BigDecimal.TEN, "Entrada de la plaza");
+        ReflectionTestUtils.setField(walk, "id", walkId);
+        ReflectionTestUtils.setField(walk, "status", status);
+        return walk;
     }
 
     private void actor(UserRole role, boolean active) {

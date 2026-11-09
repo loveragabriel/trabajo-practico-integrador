@@ -3,11 +3,11 @@ package com.tpi.paseadores.walk.service;
 import com.tpi.paseadores.shared.exception.BusinessRuleViolationException;
 import com.tpi.paseadores.shared.exception.ForbiddenActionException;
 import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
+import com.tpi.paseadores.walk.domain.WalkStatus;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkCreateRequest;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
 import com.tpi.paseadores.walk.dto.WalkSearchFilters;
-import com.tpi.paseadores.walk.dto.WalkSearchResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -79,7 +79,7 @@ class WalkServiceDatabaseIntegrationTest {
             assertThat(detail.endTime()).isEqualTo(start.plusMinutes(45));
             assertThat(detail.availableSpots()).isEqualTo(3);
             assertThat(service.search(walker, new WalkSearchFilters(zone, null, null, 0, 12)).items())
-                    .extracting(WalkSearchResponse::id).containsExactly(id);
+                    .extracting(WalkReadResponse::id).containsExactly(id);
         }
 
         @Test
@@ -239,7 +239,7 @@ class WalkServiceDatabaseIntegrationTest {
         @Test
         void excludesUnavailableWalksAndCountsOnlyJoinedBookings() {
             var result = service.search(actor, new WalkSearchFilters(zone, null, null, 0, 12));
-            assertThat(result.items()).extracting(WalkSearchResponse::id).containsExactly(available);
+            assertThat(result.items()).extracting(WalkReadResponse::id).containsExactly(available);
             assertThat(result.items().getFirst().availableSpots()).isEqualTo(2);
             assertThat(result.items().getFirst().walker().name()).isEqualTo("Usuario de prueba");
             assertThat(service.search(actor, new WalkSearchFilters(UUID.randomUUID(), null, null, 0, 12)).items()).isEmpty();
@@ -248,7 +248,7 @@ class WalkServiceDatabaseIntegrationTest {
         @Test
         void appliesInclusiveFromAndExclusiveTo() {
             assertThat(service.search(actor, new WalkSearchFilters(zone, start, start.plusHours(1), 0, 12)).items())
-                    .extracting(WalkSearchResponse::id).containsExactly(available);
+                    .extracting(WalkReadResponse::id).containsExactly(available);
             assertThat(service.search(actor, new WalkSearchFilters(zone, null, start, 0, 12)).items()).isEmpty();
             assertThat(service.search(actor, new WalkSearchFilters(zone, start.plusSeconds(1), null, 0, 12)).items()).isEmpty();
         }
@@ -258,9 +258,9 @@ class WalkServiceDatabaseIntegrationTest {
             UUID later = walk(walker, "PUBLISHED", start.plusHours(2), 2);
             var first = service.search(actor, new WalkSearchFilters(zone, null, null, 0, 1));
             var second = service.search(actor, new WalkSearchFilters(zone, null, null, 1, 1));
-            assertThat(first.items()).extracting(WalkSearchResponse::id).containsExactly(available);
+            assertThat(first.items()).extracting(WalkReadResponse::id).containsExactly(available);
             assertThat(first.hasNext()).isTrue();
-            assertThat(second.items()).extracting(WalkSearchResponse::id).containsExactly(later);
+            assertThat(second.items()).extracting(WalkReadResponse::id).containsExactly(later);
             assertThat(second.hasNext()).isFalse();
         }
 
@@ -284,6 +284,154 @@ class WalkServiceDatabaseIntegrationTest {
             UUID pet = UUID.randomUUID();
             jdbc.update("INSERT INTO pets(id,owner_id,name) VALUES (?,?,'Mascota de prueba')", pet, owner);
             jdbc.update("INSERT INTO walk_pets(walk_id,pet_id,status) VALUES (?,?,?::booking_status)", walk, pet, status);
+        }
+    }
+
+    // Sin @Transactional a propósito: la prueba de concurrencia necesita que los fixtures ya estén
+    // confirmados antes de que arranquen los hilos, y que cada hilo use su propia transacción real
+    // (igual que Creation.concurrentCreationsOfTheFirstWalkCannotBothSucceed).
+    @Nested
+    class Bookings {
+        @Autowired JdbcTemplate jdbc;
+        @Autowired WalkService service;
+        @Autowired BookingService bookingService;
+        @Autowired Clock clock;
+
+        private UUID zone, walker, client, otherClient;
+        private LocalDateTime start;
+
+        @BeforeEach
+        void fixtures() {
+            zone = UUID.randomUUID();
+            jdbc.update("INSERT INTO zones(id,name) VALUES (?,?)", zone, "Barrio de reservas " + zone);
+            walker = user("WALKER");
+            client = user("CLIENT");
+            otherClient = user("CLIENT");
+            start = LocalDateTime.now(clock).plusDays(2).withSecond(0).withNano(0);
+        }
+
+        @AfterEach
+        void cleanup() {
+            jdbc.update("DELETE FROM walk_pets WHERE walk_id IN (SELECT id FROM walks WHERE walker_id=?)", walker);
+            jdbc.update("DELETE FROM walks WHERE walker_id=?", walker);
+            jdbc.update("DELETE FROM pets WHERE owner_id IN (?,?)", client, otherClient);
+            jdbc.update("DELETE FROM users WHERE id IN (?,?,?)", walker, client, otherClient);
+            jdbc.update("DELETE FROM zones WHERE id=?", zone);
+        }
+
+        @Test
+        void joinFillsTheWalkAndCancelBookingReopensIt() {
+            UUID walkId = walk(1);
+            UUID pet = pet(client);
+
+            bookingService.join(client, walkId, pet);
+            assertThat(status(walkId)).isEqualTo("FULL");
+
+            bookingService.cancelBooking(client, walkId, pet);
+            assertThat(status(walkId)).isEqualTo("PUBLISHED");
+            assertThat(bookingStatus(walkId, pet)).isEqualTo("CANCELLED");
+        }
+
+        @Test
+        void rejoiningACancelledBookingReusesTheSameRow() {
+            UUID walkId = walk(3);
+            UUID pet = pet(client);
+            var first = bookingService.join(client, walkId, pet);
+            bookingService.cancelBooking(client, walkId, pet);
+            var second = bookingService.join(client, walkId, pet);
+
+            assertThat(second.id()).isEqualTo(first.id());
+            assertThat(jdbc.queryForObject(
+                    "SELECT count(*) FROM walk_pets WHERE walk_id=? AND pet_id=?", Integer.class, walkId, pet))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void concurrentJoinsForTheLastSpotCannotBothSucceed() throws Exception {
+            UUID walkId = walk(1);
+            UUID petA = pet(client);
+            UUID petB = pet(otherClient);
+            var ready = new CountDownLatch(2);
+            var startTogether = new CountDownLatch(1);
+            Callable<Boolean> attemptA = () -> attempt(ready, startTogether, client, walkId, petA);
+            Callable<Boolean> attemptB = () -> attempt(ready, startTogether, otherClient, walkId, petB);
+            try (var threads = Executors.newFixedThreadPool(2)) {
+                var first = threads.submit(attemptA);
+                var second = threads.submit(attemptB);
+                boolean bothReady = ready.await(5, TimeUnit.SECONDS);
+                startTogether.countDown();
+                assertThat(bothReady).isTrue();
+                assertThat(first.get(15, TimeUnit.SECONDS)).isNotEqualTo(second.get(15, TimeUnit.SECONDS));
+            }
+            assertThat(jdbc.queryForObject(
+                    "SELECT count(*) FROM walk_pets WHERE walk_id=? AND status='JOINED'", Integer.class, walkId))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void cancellingAWalkCancelsEveryActiveBookingInTheSameCall() {
+            UUID walkId = walk(3);
+            UUID petA = pet(client);
+            UUID petB = pet(otherClient);
+            bookingService.join(client, walkId, petA);
+            bookingService.join(otherClient, walkId, petB);
+
+            service.updateStatus(walker, walkId, WalkStatus.CANCELLED);
+
+            assertThat(status(walkId)).isEqualTo("CANCELLED");
+            assertThat(bookingStatus(walkId, petA)).isEqualTo("CANCELLED");
+            assertThat(bookingStatus(walkId, petB)).isEqualTo("CANCELLED");
+        }
+
+        @Test
+        void cannotStartAWalkWithoutAnyBooking() {
+            UUID walkId = walk(3);
+            assertThatThrownBy(() -> service.updateStatus(walker, walkId, WalkStatus.IN_PROGRESS))
+                    .isInstanceOf(BusinessRuleViolationException.class);
+            assertThat(status(walkId)).isEqualTo("PUBLISHED");
+        }
+
+        private boolean attempt(CountDownLatch ready, CountDownLatch startTogether, UUID actor, UUID walkId, UUID petId)
+                throws InterruptedException {
+            ready.countDown();
+            if (!startTogether.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("No arrancaron las dos solicitudes");
+            try {
+                bookingService.join(actor, walkId, petId);
+                return true;
+            } catch (BusinessRuleViolationException conflict) {
+                return false;
+            }
+        }
+
+        private UUID user(String role) {
+            UUID id = UUID.randomUUID();
+            jdbc.update("INSERT INTO users(id,full_name,email,password_hash,role,zone_id) VALUES (?,?,?,?,?::user_role,?)",
+                    id, "Usuario de prueba", id + "@example.com", "hash-solo-de-prueba", role, zone);
+            return id;
+        }
+
+        private UUID walk(int capacity) {
+            UUID id = UUID.randomUUID();
+            jdbc.update("""
+                    INSERT INTO walks(id,walker_id,zone_id,start_time,duration_minutes,capacity,price_per_pet,meeting_point,status)
+                    VALUES (?,?,?,?,60,?,2500,'Entrada de la plaza','PUBLISHED')
+                    """, id, walker, zone, Timestamp.valueOf(start), capacity);
+            return id;
+        }
+
+        private UUID pet(UUID ownerId) {
+            UUID id = UUID.randomUUID();
+            jdbc.update("INSERT INTO pets(id,owner_id,name) VALUES (?,?,'Mascota de prueba')", id, ownerId);
+            return id;
+        }
+
+        private String status(UUID walkId) {
+            return jdbc.queryForObject("SELECT status FROM walks WHERE id=?", String.class, walkId);
+        }
+
+        private String bookingStatus(UUID walkId, UUID petId) {
+            return jdbc.queryForObject(
+                    "SELECT status FROM walk_pets WHERE walk_id=? AND pet_id=?", String.class, walkId, petId);
         }
     }
 }

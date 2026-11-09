@@ -65,7 +65,7 @@ function PublicationForm({ options }: { options: WalkPublicationOptions }) {
     setSubmitting(true)
     setError(null)
     try {
-      const id = await publishWalk({
+      const created = await publishWalk({
         zoneId,
         startTime: String(fields.get('startTime') ?? ''),
         durationMinutes: Number(fields.get('durationMinutes')),
@@ -73,7 +73,9 @@ function PublicationForm({ options }: { options: WalkPublicationOptions }) {
         pricePerPet: Number(fields.get('pricePerPet')),
         meetingPoint,
       })
-      navigate(generatePath(paths.walkDetail, { walkId: id }), { replace: true })
+      // evita el flash de "Cargando…" en el detalle: WalkDetailPage igual revalida contra el
+      // servidor, esto solo precarga el primer render
+      navigate(generatePath(paths.walkDetail, { walkId: created.id }), { replace: true, state: { walk: created } })
     } catch (failure) {
       setError(publicationError(failure))
     } finally {

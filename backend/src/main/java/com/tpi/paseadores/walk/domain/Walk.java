@@ -87,6 +87,21 @@ public class Walk {
         return walkerId.equals(userId);
     }
 
+    // RN-30: el pasaje PUBLISHED <-> FULL es automático según los cupos JOINED restantes.
+    // El service llama esto después de cada join/cancelBooking; no valida nada más allá de eso.
+    public void updateAvailability(long joinedCount) {
+        if (status == WalkStatus.PUBLISHED && joinedCount >= capacity) {
+            status = WalkStatus.FULL;
+        } else if (status == WalkStatus.FULL && joinedCount < capacity) {
+            status = WalkStatus.PUBLISHED;
+        }
+    }
+
+    // mutación simple: el service valida con WalkStatus.canTransitionTo antes de llamar esto (RN-29)
+    public void transitionTo(WalkStatus next) {
+        status = next;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
