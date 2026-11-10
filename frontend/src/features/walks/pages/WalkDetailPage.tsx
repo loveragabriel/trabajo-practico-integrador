@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { generatePath, Link, useLocation, useParams } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { useAuth } from '@/features/auth'
 import { bookingError, joinWalk } from '@/features/bookings/api/bookings'
@@ -84,7 +84,7 @@ export function WalkDetailPage() {
   const location = useLocation()
   const request = useCallback((signal: AbortSignal) => loadWalkDetail(walkId ?? '', signal), [walkId])
   const { data: fetchedWalk, loading, error, reload } = useWalkResource(`${session?.token ?? ''}:${walkId}`, !!session, request)
-  // al llegar desde "Publicar paseo" ya tenemos el detalle: evita el flash de "Cargando…" en el
+  // al llegar desde "Publicar paseo" ya tenemos el detalle y evita el flash de "Cargando…" en el
   // primer render. El hook igual revalida contra el servidor y lo reemplaza cuando responde.
   const preloaded = (location.state as { walk?: WalkDetails } | null)?.walk
   const walk = fetchedWalk ?? (preloaded?.id === walkId ? preloaded : undefined)
@@ -106,7 +106,9 @@ export function WalkDetailPage() {
       {loading && !walk && <p role="status">Cargando el detalle del paseo…</p>}
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5"><p>{error}</p><button type="button" onClick={reload} className="mt-2 font-semibold underline">Reintentar detalle</button></div>}
       {walk && <>
-        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6"><p className="text-sm font-semibold text-blue-800">{walkStatusLabels[walk.status]}</p><h1 className="mt-2 text-3xl font-bold">Paseo en {walk.zoneName}</h1><p className="mt-3 break-words text-slate-700">Con {walk.walker.name}</p></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6"><p className="text-sm font-semibold text-blue-800">{walkStatusLabels[walk.status]}</p><h1 className="mt-2 text-3xl font-bold">Paseo en {walk.zoneName}</h1><p className="mt-3 break-words text-slate-700">
+          Con <Link to={generatePath(paths.walkerProfile, { walkerId: walk.walker.id })} className="font-medium text-blue-700 underline">{walk.walker.name}</Link>
+        </p></div>
         <div className="grid items-start gap-6 md:grid-cols-2">
           <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6">
             <dl className="space-y-4">
