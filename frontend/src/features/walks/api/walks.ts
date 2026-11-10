@@ -1,5 +1,31 @@
+import type { PetSize } from '@/features/pets/api/pets'
 import { apiClient, ApiRequestError } from '@/shared/api/client'
 import { isWalkDetails, validWalkId, type AgendaFilters, type WalkAgenda, type WalkDetails, type WalkStatus } from './walkReadContract'
+
+export interface JoinedPet {
+  petId: string
+  petName: string
+  breed: string | null
+  size: PetSize | null
+  notes: string | null
+  owner: { name: string; phone: string | null }
+}
+
+function isJoinedPet(value: unknown): value is JoinedPet {
+  if (!value || typeof value !== 'object') return false
+  const pet = value as JoinedPet
+  return validWalkId(pet.petId) && typeof pet.petName === 'string' && !!pet.owner && typeof pet.owner.name === 'string'
+}
+
+// solo la ve el paseador dueño del walk: quién se sumó, con el contacto del dueño de cada mascota
+export async function loadJoinedPets(walkId: string, signal?: AbortSignal): Promise<JoinedPet[]> {
+  if (!validWalkId(walkId)) throw new Error('El identificador del paseo no es válido.')
+  const { data } = await apiClient.get<JoinedPet[]>(`/walks/${walkId}/pets`, { signal })
+  if (!Array.isArray(data) || !data.every(isJoinedPet)) {
+    throw new Error('No pudimos cargar las mascotas de este paseo.')
+  }
+  return data
+}
 
 export async function loadWalkAgenda(filters: AgendaFilters, signal: AbortSignal): Promise<WalkAgenda> {
   const { data } = await apiClient.get<WalkAgenda>('/walks/mine', { params: { ...filters, size: 12 }, signal })

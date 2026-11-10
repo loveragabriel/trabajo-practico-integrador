@@ -2,17 +2,9 @@ import { generatePath, Link } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { Icon } from '@/shared/components/Icon'
 import { minutesUntilWalk, relativeWalkDay, walkTimeOnly } from '../api/search'
-import { walkStatusLabels, type WalkDetails } from '../api/walkReadContract'
+import { walkStatusBadgeClass, walkStatusLabels, type WalkDetails } from '../api/walkReadContract'
 
 const MAX_PAW_SLOTS = 10
-
-const statusBadgeClass: Record<WalkDetails['status'], string> = {
-  PUBLISHED: 'bg-secondary-fixed text-on-secondary-fixed-variant',
-  FULL: 'bg-primary-fixed text-on-primary-fixed-variant',
-  IN_PROGRESS: 'bg-primary-container text-on-primary',
-  COMPLETED: 'bg-surface-container-high text-on-surface-variant',
-  CANCELLED: 'bg-error-container text-on-error-container',
-}
 
 // solo para salidas de hoy que todavía no arrancaron, y dentro de las próximas 3hs:
 // una cuenta regresiva más lejana no aporta nada útil
@@ -44,7 +36,7 @@ export function WalkAgendaCard({ walk }: { walk: WalkDetails }) {
           </h2>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className={`rounded-full px-2.5 py-0.5 text-label-sm font-semibold ${statusBadgeClass[walk.status]}`}>
+          <span className={`rounded-full px-2.5 py-0.5 text-label-sm font-semibold ${walkStatusBadgeClass[walk.status]}`}>
             {walkStatusLabels[walk.status]}
           </span>
           {soon && <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 text-label-sm font-semibold text-primary">{soon}</span>}

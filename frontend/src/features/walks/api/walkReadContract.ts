@@ -5,6 +5,15 @@ export const walkStatusLabels = {
   COMPLETED: 'Finalizado', CANCELLED: 'Cancelado',
 } as const
 
+// mismo mapeo de color para el mismo estado en WalkAgendaCard y WalkOwnerSummaryCard (WalkDetailPage)
+export const walkStatusBadgeClass: Record<keyof typeof walkStatusLabels, string> = {
+  PUBLISHED: 'bg-secondary-fixed text-on-secondary-fixed-variant',
+  FULL: 'bg-primary-fixed text-on-primary-fixed-variant',
+  IN_PROGRESS: 'bg-primary-container text-on-primary',
+  COMPLETED: 'bg-surface-container-high text-on-surface-variant',
+  CANCELLED: 'bg-error-container text-on-error-container',
+}
+
 export type WalkStatus = keyof typeof walkStatusLabels
 export type AgendaPeriod = 'UPCOMING' | 'HISTORY'
 export interface AgendaFilters { period: AgendaPeriod; page: number }
