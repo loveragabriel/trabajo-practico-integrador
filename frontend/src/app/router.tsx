@@ -10,6 +10,7 @@ import { WalkerProfilePage } from '@/features/profile/pages/WalkerProfilePage'
 import { MyWalksPage } from '@/features/walks/pages/MyWalksPage'
 import { PublishWalkPage } from '@/features/walks/pages/PublishWalkPage'
 import { WalkDetailPage } from '@/features/walks/pages/WalkDetailPage'
+import { WalkPublishedPage } from '@/features/walks/pages/WalkPublishedPage'
 import { WalkSearchPage } from '@/features/walks/pages/WalkSearchPage'
 import { AppLayout } from './AppLayout'
 import { HomePage } from './pages/HomePage'
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
         children: [
           { path: paths.myWalks, element: <MyWalksPage /> },
           { path: paths.publishWalk, element: <PublishWalkPage /> },
+          { path: paths.walkPublished, element: <WalkPublishedPage /> },
         ],
       },
 

@@ -22,4 +22,5 @@ export const paths = {
   // WALKER
   myWalks: '/my-walks',
   publishWalk: '/my-walks/new',
+  walkPublished: '/my-walks/:walkId/published',
 } as const
