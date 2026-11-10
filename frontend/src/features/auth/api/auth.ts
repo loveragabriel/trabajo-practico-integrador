@@ -9,9 +9,6 @@ export interface RegisterPayload {
   phone?: string
   role: Role
   zoneId: string
-  // solo aplican si role es WALKER (RN-04); el backend los ignora para un dueño
-  defaultPrice?: number
-  defaultCapacity?: number
 }
 
 export interface LoginPayload {

@@ -1,14 +1,11 @@
 package com.tpi.paseadores.auth.dto;
 
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 // defaultPrice/defaultCapacity only apply when role is WALKER (RN-04); the service
@@ -19,8 +16,6 @@ public record RegisterRequest(
         @NotBlank @Size(min = 8, max = 72) String password,
         @Size(max = 30) String phone,
         @NotBlank @Pattern(regexp = "CLIENT|WALKER", message = "must be CLIENT or WALKER") String role,
-        @NotNull UUID zoneId,
-        @DecimalMin(value = "0", message = "must not be negative") BigDecimal defaultPrice,
-        @Positive Integer defaultCapacity
+        @NotNull UUID zoneId
 ) {
 }

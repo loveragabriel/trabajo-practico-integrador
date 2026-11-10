@@ -49,7 +49,7 @@ class PetDatabaseIntegrationTest {
     private UUID registerClient() {
         UUID zoneId = zoneRepository.findAllByOrderByNameAsc().getFirst().getId();
         return authService.register(new RegisterRequest("Integration Client",
-                "client-" + UUID.randomUUID() + "@example.com", "password123", null, "CLIENT", zoneId, null, null))
+                "client-" + UUID.randomUUID() + "@example.com", "password123", null, "CLIENT", zoneId))
                 .user().id();
     }
 }
