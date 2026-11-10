@@ -12,4 +12,5 @@ export interface UserProfile {
   defaultCapacity: number | null
   ratingAvg: number
   reviewCount: number
+  createdAt: string
 }

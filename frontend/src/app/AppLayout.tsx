@@ -100,8 +100,11 @@ export function AppLayout() {
         <Outlet />
       </main>
 
+      {/* sticky, no fixed: en pantallas cortas (p.ej. perfil del paseador con poco contenido) queda
+          justo después del contenido en vez de dejar un hueco antes del borde real de la pantalla;
+          en pantallas largas se pega abajo igual que fixed apenas el scroll lo alcanza */}
       {session && (
-        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-outline-variant/30 bg-surface/90 pb-safe shadow-[0_-4px_20px_rgba(47,93,80,0.06)] backdrop-blur-xl md:hidden">
+        <nav className="sticky inset-x-0 bottom-0 z-50 border-t border-outline-variant/30 bg-surface/90 pb-safe shadow-[0_-4px_20px_rgba(47,93,80,0.06)] backdrop-blur-xl md:hidden">
           <div className="mx-auto flex h-16 max-w-5xl items-center justify-around px-2">
             {items.map((item) => (
               <NavLink
