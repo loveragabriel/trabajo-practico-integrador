@@ -1,8 +1,10 @@
 package com.tpi.paseadores.review.controller;
 
+import com.tpi.paseadores.review.dto.ReceivedReviewResponse;
 import com.tpi.paseadores.review.dto.ReviewResponse;
 import com.tpi.paseadores.review.service.ReviewService;
 import com.tpi.paseadores.shared.config.SecurityConfig;
+import com.tpi.paseadores.shared.exception.ForbiddenActionException;
 import com.tpi.paseadores.shared.security.JwtAuthenticationFilter;
 import com.tpi.paseadores.shared.security.JwtService;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,7 @@ class ReviewControllerTest {
     @Test
     void listingReviewsRequiresAToken() throws Exception {
         mvc.perform(get("/api/walks/{walkId}/reviews", UUID.randomUUID())).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/reviews")).andExpect(status().isUnauthorized());
         verifyNoInteractions(service);
     }
 
@@ -99,7 +102,32 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$[0].rating").value(4));
     }
 
+    // --- reseñas recibidas (mine) --------------------------------------------------------------
+
+    @Test
+    void returnsTheReceivedReviewsForTheTokenActor() throws Exception {
+        UUID actor = UUID.randomUUID(), walkId = UUID.randomUUID();
+        when(service.getMine(actor)).thenReturn(List.of(
+                new ReceivedReviewResponse(UUID.randomUUID(), walkId, 5, "Excelente", LocalDateTime.now(), "Martina")));
+        mvc.perform(get("/api/reviews").header("Authorization", bearer(actor, "WALKER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].authorName").value("Martina"))
+                .andExpect(jsonPath("$[0].rating").value(5));
+    }
+
+    @Test
+    void clientsCannotReadReceivedReviews() throws Exception {
+        UUID actor = UUID.randomUUID();
+        when(service.getMine(actor)).thenThrow(new ForbiddenActionException("Solo paseadores activos pueden consultar sus reseñas."));
+        mvc.perform(get("/api/reviews").header("Authorization", bearer(actor, "CLIENT")))
+                .andExpect(status().isForbidden());
+    }
+
     private String bearer(UUID userId) {
-        return "Bearer " + jwt.generateToken(userId.toString(), "CLIENT");
+        return bearer(userId, "CLIENT");
+    }
+
+    private String bearer(UUID userId, String role) {
+        return "Bearer " + jwt.generateToken(userId.toString(), role);
     }
 }
