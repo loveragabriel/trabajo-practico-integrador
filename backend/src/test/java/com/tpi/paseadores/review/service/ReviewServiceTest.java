@@ -2,8 +2,10 @@ package com.tpi.paseadores.review.service;
 
 import com.tpi.paseadores.pet.dto.PetResponse;
 import com.tpi.paseadores.pet.service.PetService;
+import com.tpi.paseadores.review.dto.ReceivedReviewResponse;
 import com.tpi.paseadores.review.dto.ReviewCreateRequest;
 import com.tpi.paseadores.review.dto.ReviewResponse;
+import com.tpi.paseadores.review.repository.ReviewReadRepository;
 import com.tpi.paseadores.review.repository.ReviewRepository;
 import com.tpi.paseadores.shared.exception.BusinessRuleViolationException;
 import com.tpi.paseadores.shared.exception.ForbiddenActionException;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
     @Mock ReviewRepository reviews;
+    @Mock ReviewReadRepository reviewReads;
     @Mock WalkService walkService;
     @Mock WalkPetService walkPets;
     @Mock UserService users;
@@ -53,7 +56,7 @@ class ReviewServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ReviewService(reviews, walkService, walkPets, users, pets);
+        service = new ReviewService(reviews, reviewReads, walkService, walkPets, users, pets);
     }
 
     @Test
@@ -126,6 +129,37 @@ class ReviewServiceTest {
                 .hasMessage("Ya calificaste este paseo.");
         verify(reviews, never()).save(any());
         verify(users, never()).applyReviewRating(any(), anyInt());
+    }
+
+    // --- reseñas recibidas (getMine) -------------------------------------------------------------
+
+    @Test
+    void activeWalkerSeesTheirReceivedReviewsWithTheAuthorName() {
+        User walker = new User();
+        walker.setId(walkerId);
+        walker.setRole(UserRole.WALKER);
+        walker.setActive(true);
+        when(users.findById(walkerId)).thenReturn(Optional.of(walker));
+        var received = new ReceivedReviewResponse(UUID.randomUUID(), walkId, 5, "Excelente", LocalDateTime.now(), "Martina");
+        when(reviewReads.findReceivedByWalker(walkerId)).thenReturn(List.of(received));
+
+        assertThat(service.getMine(walkerId)).containsExactly(received);
+    }
+
+    @Test
+    void clientsCannotReadReceivedReviews() {
+        actor(UserRole.CLIENT, true);
+        assertThatThrownBy(() -> service.getMine(authorId)).isInstanceOf(ForbiddenActionException.class);
+        verifyNoInteractions(reviewReads);
+    }
+
+    @Test
+    void inactiveOrMissingWalkersCannotReadReceivedReviews() {
+        actor(UserRole.WALKER, false);
+        assertThatThrownBy(() -> service.getMine(authorId)).isInstanceOf(ForbiddenActionException.class);
+        when(users.findById(authorId)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.getMine(authorId)).isInstanceOf(ForbiddenActionException.class);
+        verifyNoInteractions(reviewReads);
     }
 
     private void actor(UserRole role, boolean active) {

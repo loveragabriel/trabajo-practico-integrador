@@ -3,8 +3,10 @@ package com.tpi.paseadores.review.service;
 import com.tpi.paseadores.pet.dto.PetResponse;
 import com.tpi.paseadores.pet.service.PetService;
 import com.tpi.paseadores.review.domain.Review;
+import com.tpi.paseadores.review.dto.ReceivedReviewResponse;
 import com.tpi.paseadores.review.dto.ReviewCreateRequest;
 import com.tpi.paseadores.review.dto.ReviewResponse;
+import com.tpi.paseadores.review.repository.ReviewReadRepository;
 import com.tpi.paseadores.review.repository.ReviewRepository;
 import com.tpi.paseadores.shared.exception.BusinessRuleViolationException;
 import com.tpi.paseadores.shared.exception.ForbiddenActionException;
@@ -30,6 +32,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReviewService {
     private final ReviewRepository reviewRepository;
+    private final ReviewReadRepository reviewReadRepository;
     private final WalkService walkService;
     private final WalkPetService walkPetService;
     private final UserService userService;
@@ -38,6 +41,18 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponse> getAll(UUID userId, UUID walkId) {
         return reviewRepository.findAllByWalkId(walkId).stream().map(ReviewResponse::from).toList();
+    }
+
+    // reseñas que recibió el paseador dueño del token, con el nombre de quien las escribió
+    @Transactional(readOnly = true)
+    public List<ReceivedReviewResponse> getMine(UUID walkerId) {
+        boolean isActiveWalker = userService.findById(walkerId)
+                .filter(u -> u.isActive() && u.getRole() == UserRole.WALKER)
+                .isPresent();
+        if (!isActiveWalker) {
+            throw new ForbiddenActionException("Solo paseadores activos pueden consultar sus reseñas.");
+        }
+        return reviewReadRepository.findReceivedByWalker(walkerId);
     }
 
     @Transactional
