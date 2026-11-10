@@ -1,6 +1,8 @@
 package com.tpi.paseadores.shared.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +15,7 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -44,9 +47,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, "No endpoint for this request", request, null);
     }
 
-    // last resort: never leak internal details (stack traces, entity fields) to the client
+    // last resort: never leak internal details (stack traces, entity fields) to the client,
+    // but still log them server-side — sin esto un 500 no deja ningún rastro
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error on {} {}", request.getMethod(), request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", request, null);
     }
 

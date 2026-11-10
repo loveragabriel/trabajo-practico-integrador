@@ -282,8 +282,9 @@ function WalkerProfileForm({ profile, coverage, zones, onSaved, onSignOut }: For
           </div>
 
           {/* catálogo con ~50 barrios: el buscador filtra y el scroll acotado evita que la
-              tarjeta crezca sin límite hacia abajo */}
-          <div className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+              tarjeta crezca sin límite hacia abajo. min-h-0 es necesario: sin eso, un hijo
+              flex ignora max-height/overflow y se estira a lo que mida su contenido */}
+          <div className="flex min-h-0 max-h-72 flex-col gap-2 overflow-y-auto pr-1">
             {filteredZones.map((zone) => {
               const checked = selectedZones.includes(zone.id)
               return (
