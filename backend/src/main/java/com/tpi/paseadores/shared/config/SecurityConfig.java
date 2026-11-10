@@ -45,7 +45,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/zones/**").permitAll()
                 // un paseo publicado expone punto de encuentro y horario, y el perfil del paseador
                 // expone datos personales: ninguno de los dos queda visible sin cuenta
-                .anyRequest().authenticated()
+                .requestMatchers("/api/**").authenticated()
+                // todo lo que no es /api/** es la SPA (deploy de un solo jar, ver Dockerfile):
+                // el shell HTML y sus bundles son públicos a propósito, React Router decide del
+                // lado del cliente qué mostrar sin sesión; los datos siempre pasan por /api/**
+                .anyRequest().permitAll()
             )
             .exceptionHandling(e -> e
                 .authenticationEntryPoint(authenticationEntryPoint)
