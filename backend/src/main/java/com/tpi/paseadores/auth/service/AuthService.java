@@ -43,10 +43,6 @@ public class AuthService {
         user.setPhone(request.phone());
         user.setRole(role);
         user.setZoneId(request.zoneId());
-        if (role == UserRole.WALKER) {
-            user.setDefaultPrice(request.defaultPrice());
-            user.setDefaultCapacity(request.defaultCapacity());
-        }
 
         user = userService.create(user);
         return new AuthResponse(issueToken(user), UserSummary.from(user));

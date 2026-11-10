@@ -36,7 +36,7 @@ class AuthDatabaseIntegrationTest {
         String email = "walker-" + UUID.randomUUID() + "@example.com";
 
         var registered = service.register(new RegisterRequest(
-                "Integration Walker", email, "password123", null, "WALKER", zoneId, null, null));
+                "Integration Walker", email, "password123", null, "WALKER", zoneId));
         assertThat(registered.user().role()).isEqualTo("WALKER");
 
         User persisted = userRepository.findByEmailIgnoreCase(email).orElseThrow();

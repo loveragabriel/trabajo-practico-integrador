@@ -19,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,7 +54,7 @@ class AuthServiceTest {
     void registersAnOwnerAndIssuesAToken() {
         UUID zoneId = UUID.randomUUID();
         var request = new RegisterRequest("Ana Dueña", "ana@example.com", "password123", null,
-                "CLIENT", zoneId, null, null);
+                "CLIENT", zoneId);
 
         when(userService.existsByEmail("ana@example.com")).thenReturn(false);
         when(zoneService.existsById(zoneId)).thenReturn(true);
@@ -86,10 +85,12 @@ class AuthServiceTest {
     }
 
     @Test
-    void registersAWalkerWithOptionalDefaults() {
+    void registersAWalkerWithoutDefaults() {
+        // el precio/cupo por defecto ya no se piden al registrarse: un paseador los
+        // configura después en el paso 2 (PUT /api/walkers/me, ver WalkerCoverageServiceTest)
         UUID zoneId = UUID.randomUUID();
         var request = new RegisterRequest("Beto Paseador", "beto@example.com", "password123", "+54 11 5555-5555",
-                "WALKER", zoneId, new BigDecimal("1500.00"), 4);
+                "WALKER", zoneId);
 
         when(zoneService.existsById(zoneId)).thenReturn(true);
         when(passwordEncoder.encode(any())).thenReturn("hashed");
@@ -106,14 +107,14 @@ class AuthServiceTest {
         verify(userService).create(captor.capture());
         User saved = captor.getValue();
         assertThat(saved.getRole()).isEqualTo(UserRole.WALKER);
-        assertThat(saved.getDefaultPrice()).isEqualByComparingTo("1500.00");
-        assertThat(saved.getDefaultCapacity()).isEqualTo(4);
+        assertThat(saved.getDefaultPrice()).isNull();
+        assertThat(saved.getDefaultCapacity()).isNull();
     }
 
     @Test
     void rejectsRegistrationWithADuplicateEmail() {
         var request = new RegisterRequest("Ana", "ana@example.com", "password123", null,
-                "CLIENT", UUID.randomUUID(), null, null);
+                "CLIENT", UUID.randomUUID());
         when(userService.existsByEmail("ana@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> service.register(request))
@@ -126,7 +127,7 @@ class AuthServiceTest {
     void rejectsRegistrationWithAnUnknownZone() {
         UUID zoneId = UUID.randomUUID();
         var request = new RegisterRequest("Ana", "ana@example.com", "password123", null,
-                "CLIENT", zoneId, null, null);
+                "CLIENT", zoneId);
         when(userService.existsByEmail("ana@example.com")).thenReturn(false);
         when(zoneService.existsById(zoneId)).thenReturn(false);
 
