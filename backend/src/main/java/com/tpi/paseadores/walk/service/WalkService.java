@@ -12,6 +12,7 @@ import com.tpi.paseadores.user.service.UserService;
 import com.tpi.paseadores.user.service.WalkerCoverageService;
 import com.tpi.paseadores.walk.domain.Walk;
 import com.tpi.paseadores.walk.domain.WalkStatus;
+import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkCreateRequest;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
@@ -138,6 +139,19 @@ public class WalkService {
             walkPets.cancelAllJoined(walkId);
         }
         walk.transitionTo(target);
+    }
+
+    // RN-31 extendido a esta lectura: solo el paseador dueño ve quién se sumó a su propia
+    // salida, con el contacto del dueño de cada mascota para coordinar antes de salir
+    @Transactional(readOnly = true)
+    public List<JoinedPetResponse> getJoinedPets(UUID actorId, UUID walkId) {
+        requireRole(actorId, UserRole.WALKER);
+        Walk walk = walkRepository.findById(walkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paseo no encontrado."));
+        if (!walk.isOwnedBy(actorId)) {
+            throw new ForbiddenActionException("No tenés permiso para consultar las mascotas de este paseo.");
+        }
+        return walkSearchRepository.findJoinedPets(walkId);
     }
 
     // usado por review: trae el Walk sin el filtro de visibilidad de getById (la validación de

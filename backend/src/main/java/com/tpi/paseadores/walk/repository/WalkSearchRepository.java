@@ -1,8 +1,10 @@
 package com.tpi.paseadores.walk.repository;
 
+import com.tpi.paseadores.pet.domain.PetSize;
 import com.tpi.paseadores.walk.domain.BookingStatus;
 import com.tpi.paseadores.walk.domain.WalkStatus;
 import com.tpi.paseadores.walk.dto.ClientBookingResponse;
+import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
 import com.tpi.paseadores.walk.dto.WalkSearchFilters;
@@ -132,6 +134,25 @@ public class WalkSearchRepository {
                 WHERE p.owner_id = :clientId
                 """ + condition + " ORDER BY w.start_time" + order + ", b.id LIMIT :limit OFFSET :offset";
         return jdbc.query(sql, params, CLIENT_BOOKING_ROW_MAPPER);
+    }
+
+    private static final RowMapper<JoinedPetResponse> JOINED_PET_ROW_MAPPER = (rs, row) -> new JoinedPetResponse(
+            rs.getObject("pet_id", UUID.class), rs.getString("pet_name"), rs.getString("breed"),
+            rs.getString("size") == null ? null : PetSize.valueOf(rs.getString("size")), rs.getString("notes"),
+            new JoinedPetResponse.OwnerSummary(rs.getString("owner_name"), rs.getString("owner_phone")));
+
+    // read model de "perros de esta salida": las mascotas JOINED de un walk puntual, con los
+    // datos de contacto de cada dueño. Solo la usa WalkService para el paseador dueño del walk.
+    public List<JoinedPetResponse> findJoinedPets(UUID walkId) {
+        return jdbc.query("""
+                SELECT p.id AS pet_id, p.name AS pet_name, p.breed, p.size, p.notes,
+                       u.full_name AS owner_name, u.phone AS owner_phone
+                FROM walk_pets b
+                JOIN pets p ON p.id = b.pet_id
+                JOIN users u ON u.id = p.owner_id
+                WHERE b.walk_id = :walkId AND b.status = 'JOINED'
+                ORDER BY p.name
+                """, new MapSqlParameterSource("walkId", walkId), JOINED_PET_ROW_MAPPER);
     }
 
     public boolean hasActivePet(UUID walkId, UUID ownerId) {

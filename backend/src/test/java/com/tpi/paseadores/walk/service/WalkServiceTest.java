@@ -8,8 +8,10 @@ import com.tpi.paseadores.user.domain.User;
 import com.tpi.paseadores.user.domain.UserRole;
 import com.tpi.paseadores.user.service.UserService;
 import com.tpi.paseadores.user.service.WalkerCoverageService;
+import com.tpi.paseadores.pet.domain.PetSize;
 import com.tpi.paseadores.walk.domain.Walk;
 import com.tpi.paseadores.walk.domain.WalkStatus;
+import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkCreateRequest;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
@@ -274,6 +276,48 @@ class WalkServiceTest {
         actor(UserRole.CLIENT, true);
         when(searchRepository.findVisibleDetail(walkId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.getById(actorId, walkId)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // --- mascotas inscriptas (getJoinedPets) -----------------------------------------------------
+
+    @Test
+    void ownerWalkerSeesTheJoinedPetsWithOwnerContact() {
+        Walk walk = walk(WalkStatus.PUBLISHED, 3, now.plusHours(3));
+        User owner = new User();
+        owner.setId(walker);
+        owner.setRole(UserRole.WALKER);
+        owner.setActive(true);
+        when(users.findById(walker)).thenReturn(Optional.of(owner));
+        when(walks.findById(walkId)).thenReturn(Optional.of(walk));
+        var pet = new JoinedPetResponse(UUID.randomUUID(), "Rex", "Labrador", PetSize.MEDIUM, "Tira de la correa",
+                new JoinedPetResponse.OwnerSummary("Dueño", "+54 11 1234-5678"));
+        when(searchRepository.findJoinedPets(walkId)).thenReturn(List.of(pet));
+
+        assertThat(service.getJoinedPets(walker, walkId)).containsExactly(pet);
+    }
+
+    @Test
+    void onlyTheOwningWalkerCanSeeTheJoinedPets() {
+        actor(UserRole.WALKER, true);
+        when(walks.findById(walkId)).thenReturn(Optional.of(walk(WalkStatus.PUBLISHED, 3, now.plusHours(3))));
+        assertThatThrownBy(() -> service.getJoinedPets(actorId, walkId)).isInstanceOf(ForbiddenActionException.class);
+        verifyNoInteractions(searchRepository);
+    }
+
+    @Test
+    void clientsCannotSeeTheJoinedPets() {
+        actor(UserRole.CLIENT, true);
+        assertThatThrownBy(() -> service.getJoinedPets(actorId, walkId)).isInstanceOf(ForbiddenActionException.class);
+        verify(walks, never()).findById(any());
+        verifyNoInteractions(searchRepository);
+    }
+
+    @Test
+    void missingWalkReturnsNotFoundForJoinedPets() {
+        actor(UserRole.WALKER, true);
+        when(walks.findById(walkId)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.getJoinedPets(actorId, walkId)).isInstanceOf(ResourceNotFoundException.class);
+        verifyNoInteractions(searchRepository);
     }
 
     // --- updateStatus -------------------------------------------------------------------------------

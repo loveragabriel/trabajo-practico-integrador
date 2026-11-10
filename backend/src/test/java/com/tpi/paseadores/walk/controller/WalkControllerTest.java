@@ -8,9 +8,11 @@ import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
 import com.tpi.paseadores.shared.security.JwtAuthenticationFilter;
 import com.tpi.paseadores.shared.security.JwtService;
 import com.tpi.paseadores.shared.dto.PageResponse;
+import com.tpi.paseadores.pet.domain.PetSize;
 import com.tpi.paseadores.walk.domain.BookingStatus;
 import com.tpi.paseadores.walk.domain.WalkStatus;
 import com.tpi.paseadores.walk.dto.BookingResponse;
+import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
 import com.tpi.paseadores.walk.dto.WalkSearchFilters;
@@ -51,6 +53,7 @@ class WalkControllerTest {
         mvc.perform(get("/api/walks")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/walks/mine")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/walks/" + UUID.randomUUID())).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/walks/" + UUID.randomUUID() + "/pets")).andExpect(status().isUnauthorized());
         verifyNoInteractions(service, bookingService);
     }
 
@@ -204,6 +207,38 @@ class WalkControllerTest {
         when(service.getById(actor, id)).thenThrow(new ResourceNotFoundException("Paseo no encontrado."));
         mvc.perform(get("/api/walks/" + id).header("Authorization", token(actor, "CLIENT")))
                 .andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404));
+    }
+
+    // --- mascotas inscriptas (joinedPets) -------------------------------------------------------
+
+    @Test
+    void joinedPetsReturnsTheListForTheTokenActor() throws Exception {
+        UUID actor = UUID.randomUUID(), id = UUID.randomUUID(), petId = UUID.randomUUID();
+        when(service.getJoinedPets(actor, id)).thenReturn(List.of(new JoinedPetResponse(petId, "Rex", "Labrador",
+                PetSize.MEDIUM, "Tira de la correa", new JoinedPetResponse.OwnerSummary("Dueño", "+54 11 1234-5678"))));
+        mvc.perform(get("/api/walks/" + id + "/pets").header("Authorization", token(actor, "WALKER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].petName").value("Rex"))
+                .andExpect(jsonPath("$[0].owner.name").value("Dueño"))
+                .andExpect(jsonPath("$[0].owner.phone").value("+54 11 1234-5678"));
+        verify(service).getJoinedPets(actor, id);
+    }
+
+    @Test
+    void joinedPetsForbidsNonOwningActors() throws Exception {
+        UUID actor = UUID.randomUUID(), id = UUID.randomUUID();
+        when(service.getJoinedPets(actor, id))
+                .thenThrow(new ForbiddenActionException("No tenés permiso para consultar las mascotas de este paseo."));
+        mvc.perform(get("/api/walks/" + id + "/pets").header("Authorization", token(actor, "WALKER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void joinedPetsPropagatesNotFound() throws Exception {
+        UUID actor = UUID.randomUUID(), id = UUID.randomUUID();
+        when(service.getJoinedPets(actor, id)).thenThrow(new ResourceNotFoundException("Paseo no encontrado."));
+        mvc.perform(get("/api/walks/" + id + "/pets").header("Authorization", token(actor, "WALKER")))
+                .andExpect(status().isNotFound());
     }
 
     // --- join ------------------------------------------------------------------------------------

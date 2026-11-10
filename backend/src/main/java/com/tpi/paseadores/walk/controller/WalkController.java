@@ -4,6 +4,7 @@ import com.tpi.paseadores.shared.dto.PageResponse;
 import com.tpi.paseadores.shared.validation.Pagination;
 import com.tpi.paseadores.walk.dto.BookingResponse;
 import com.tpi.paseadores.walk.dto.ClientBookingResponse;
+import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkCreateRequest;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -71,6 +73,11 @@ public class WalkController {
     @GetMapping("/{id}")
     public WalkReadResponse getById(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
         return service.getById(UUID.fromString(userId), id);
+    }
+
+    @GetMapping("/{id}/pets")
+    public List<JoinedPetResponse> joinedPets(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
+        return service.getJoinedPets(UUID.fromString(userId), id);
     }
 
     @PostMapping("/{id}/join/{petId}")
