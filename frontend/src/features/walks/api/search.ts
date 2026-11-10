@@ -110,3 +110,31 @@ export function formatWalkDate(value: string) {
     timeZone: 'America/Argentina/Buenos_Aires', dateStyle: 'medium', timeStyle: 'short',
   }).format(new Date(`${value}-03:00`))
 }
+
+function baDayOf(instant: Date) {
+  // 'en-CA' formatea como YYYY-MM-DD, cómodo para comparar fechas calendario sin horas
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(instant)
+}
+
+export function isWalkToday(startTime: string) {
+  return startTime.slice(0, 10) === baDayOf(new Date())
+}
+
+export function relativeWalkDay(startTime: string) {
+  const day = startTime.slice(0, 10)
+  if (day === baDayOf(new Date())) return 'HOY'
+  if (day === baDayOf(new Date(Date.now() + 24 * 60 * 60 * 1000))) return 'MAÑANA'
+  return new Intl.DateTimeFormat('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: 'short',
+  }).format(new Date(`${startTime}-03:00`)).toUpperCase().replace('.', '')
+}
+
+export function walkTimeOnly(startTime: string) {
+  return new Intl.DateTimeFormat('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).format(new Date(`${startTime}-03:00`))
+}
+
+export function minutesUntilWalk(startTime: string) {
+  return Math.round((new Date(`${startTime}-03:00`).getTime() - Date.now()) / 60000)
+}
