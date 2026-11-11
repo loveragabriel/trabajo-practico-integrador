@@ -1,38 +1,31 @@
-# Publicación de paseos
+# Publishing a Walk
 
-La pantalla **Publicar paseo** está en `/my-walks/new`. Cargamos las zonas de servicio y los valores predeterminados con `GET /api/walkers/me`, del módulo de cobertura. El barrio de referencia del perfil no cuenta por sí solo como cobertura. Si todavía no hay zonas de servicio, la pantalla explica qué falta y no muestra el formulario.
+The publishing screen is at `/my-walks/new`. It loads service neighborhoods and default values from `GET /api/walkers/me`. The walker's home neighborhood is not automatically part of their coverage. If no service neighborhoods are configured, the screen explains what is missing.
 
-## Contrato
+## Request
 
-`POST /api/walks` requiere un JWT válido de un paseador activo. El paseador se obtiene de la sesión. El cuerpo es:
+`POST /api/walks` requires a JWT for an active walker. The server identifies the walker from the session.
 
 ```json
 {
-  "zoneId": "UUID-de-un-barrio-de-servicio",
+  "zoneId": "replace-with-the-service-neighborhood-uuid",
   "startTime": "2030-01-01T11:00",
   "durationMinutes": 45,
   "capacity": 3,
   "pricePerPet": 2500.50,
-  "meetingPoint": "Entrada de la plaza"
+  "meetingPoint": "Main entrance to the park"
 }
 ```
 
-El horario se interpreta en Buenos Aires. La salida requiere al menos dos horas de anticipación; la duración mínima es de 30 minutos y debe ser múltiplo de 15. El cupo es entero positivo, el precio es no negativo con hasta dos decimales y el punto de encuentro no puede estar vacío.
+Times are local to Buenos Aires. The walk must start at least two hours later and last at least 30 minutes, in 15-minute increments. Capacity must be a positive integer, price must be non-negative with up to two decimal places, and a meeting point is required.
 
-La respuesta es `201 Created`, con `{"id":"UUID-del-paseo"}` y `Location: /api/walks/{id}`. El paseo queda `PUBLISHED` y puede consultarse en la agenda, el detalle y la búsqueda pública. Respondemos `400` ante campos inválidos, `401` sin sesión, `403` si la cuenta no es un paseador activo y `409` si hay superposición.
+On success, the API returns `201 Created`, a walk response with its ID and a `Location: /api/walks/{id}` header. The walk starts as `PUBLISHED`. Invalid fields return `400`, missing authentication returns `401`, a role without permission returns `403`, and an overlapping walk returns `409`.
 
-Comprobamos el intervalo `[inicio, fin)`: dos paseos consecutivos pueden tocarse en sus extremos. Bloquean el horario los paseos publicados, completos de cupo y en curso; los cancelados y finalizados no lo bloquean. Un bloqueo transaccional de PostgreSQL por paseador serializa la comprobación y el alta, incluso cuando publica su primer paseo. Conservamos las migraciones y el repositorio de reservas; si en el futuro se permite reprogramar, esa operación tendrá que usar el mismo bloqueo de agenda.
+For the same walker, scheduled walks and walks in progress block overlapping times. One walk may start at the exact time the previous one ends. A transaction-scoped advisory lock makes the overlap check and insert run one at a time for each walker.
 
-## Probar el recorrido
+## Try It
 
-1. Levantamos la base, el backend y el frontend como indica [Ejecución local](ejecucion-local.md).
-2. Registramos una cuenta de paseador e iniciamos sesión. Hasta integrar el formulario de cobertura del perfil, configuramos al menos una zona mediante `PUT /api/walkers/me` con el encabezado `Authorization: Bearer <JWT>` en nuestro cliente HTTP. Por ejemplo, enviamos `{"defaultPrice":2500,"defaultCapacity":3,"zoneIds":["UUID-del-barrio"]}`, usando un ID del catálogo `GET /api/zones`.
-3. Abrimos **Publicar paseo**. Elegimos un barrio disponible, fecha futura, duración, cupo, precio y punto de encuentro.
-4. Confirmamos que el alta abre el detalle. Verificamos que el mismo paseo aparece en **Mis paseos** y en **Buscar paseos**, con todos los cupos libres.
-5. Intentamos publicar otra salida del mismo paseador que se superponga; debe aparecer el aviso y no debe crearse otra fila. Un paseo que empiece exactamente al terminar el anterior sí es válido.
-
-Las pruebas de servicio y HTTP se ejecutan con `mvnw test`. La clase `WalkPublicationDatabaseIntegrationTest` requiere `TPI_DB_TESTS=true` y una base de pruebas PostgreSQL. Incluye dos publicaciones simultáneas del mismo paseador. Es una comprobación diferente de dos clientes intentando reservar la última vacante, que depende del módulo de reservas.
-
-## Qué queda pendiente
-
-La publicación no modifica la cobertura ni crea reservas. Faltan la interfaz de cobertura y perfil público, las reservas y su historial, y la cancelación y los cambios de estado del paseo con sus efectos sobre reservas. Tampoco estamos dando por cerradas la edición de paseos, las reseñas ni la prueba del flujo final completo.
+1. Follow [local setup](ejecucion-local.md), then sign in as a walker and configure at least one service neighborhood under **My profile** (`Mi perfil`).
+2. Open **Publish walk** (`Publicar paseo`) and enter a covered neighborhood, future start time, duration, capacity, price and meeting point.
+3. Check the confirmation and **My walks** (`Mis paseos`). The walk should also appear in an owner's search if the filters match.
+4. Try an overlapping time with the same walker. The API should reject it. The PostgreSQL integration tests also cover two concurrent publication attempts.

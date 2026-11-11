@@ -1,74 +1,37 @@
-# Modelo de datos relacional
+# Relational Data Model
 
-Motor: PostgreSQL. Fuente ejecutable del diseño: [01_schema.sql](../database/01_schema.sql). Fuente editable del diagrama: [schema.dbml](../database/schema.dbml).
+We use PostgreSQL. The application schema is defined in the [Flyway migrations](../backend/src/main/resources/db/migration/). The [standalone schema](../database/01_schema.sql), [editable DBML](../database/schema.dbml) and [diagram](er-diagram.png) are useful for reviewing the design.
 
-La imagen [er-diagram.png](er-diagram.png) recibida con el proyecto representa estas siete tablas. SQL/DBML precisan además los ENUM, índices y restricciones que no se muestran completamente en esa imagen. No es una base documental.
+## Tables and Relationships
 
-## Entidades
+| Table | Key | What it stores |
+|---|---|---|
+| `zones` | `id` (UUID) | A predefined neighborhood and its city. |
+| `users` | `id` (UUID) | Identity, email, password hash, contact details, role, home neighborhood and active status. Walkers can also have a default price and capacity, plus rating totals. |
+| `walker_zones` | `(walker_id, zone_id)` | Service neighborhoods for a walker. A walker can cover several neighborhoods; a neighborhood can have several walkers. |
+| `pets` | `id` (UUID) | A pet owned by one user, with its name and optional breed, size and notes. An owner may have several pets. |
+| `walks` | `id` (UUID) | A walk published by one walker in one neighborhood. Stores time, duration, capacity, price, meeting point and status. |
+| `walk_pets` | `id` (UUID) | A pet's booking on one walk, including status, booking time and notes. A walk can have several bookings, and a pet can join different walks. |
+| `reviews` | `id` (UUID) | An owner's rating of a walk, with an optional comment and a date. |
 
-| Tabla | Clave primaria | Datos y responsabilidad |
-| --- | --- | --- |
-| `zones` | `id` UUID | Nombre de barrio y ciudad; combinación única. Catálogo inicial parcial de CABA. |
-| `users` | `id` UUID | Identidad, email, hash de contraseña, contacto, rol, zona de referencia y estado activo. Para paseadores, precio/cupo predeterminados y agregados de reseñas. |
-| `walker_zones` | `(walker_id, zone_id)` | Relación entre paseadores y zonas cubiertas; evita pares duplicados. |
-| `pets` | `id` UUID | Mascota con dueño, nombre, raza/tamaño opcionales y notas. |
-| `walks` | `id` UUID | Paseo grupal de un paseador: zona, fecha/hora, duración, cupo, precio por mascota, encuentro y estado. |
-| `walk_pets` | `id` UUID | Reserva de una mascota en un paseo, estado, fecha de incorporación y notas. Par paseo/mascota único. |
-| `reviews` | `id` UUID | Valoración de un paseo por un dueño: autor, puntuación, comentario y fecha. Par paseo/autor único. |
+## Roles and States
 
-## Relaciones y cardinalidades
-
-| Relación | Cardinalidad y significado |
-| --- | --- |
-| `zones` → `users` | Una zona tiene cero o muchos usuarios; cada usuario tiene una zona de referencia. |
-| `users` ↔ `zones`, vía `walker_zones` | Un paseador puede cubrir varias zonas; una zona puede tener varios paseadores. El rol se valida en el servicio. |
-| `users` → `pets` | Un dueño tiene cero o muchas mascotas; cada mascota tiene un dueño. |
-| `users` → `walks` | Un paseador publica cero o muchos paseos; cada paseo tiene un paseador. |
-| `zones` → `walks` | Una zona tiene cero o muchos paseos; cada paseo pertenece a una zona. |
-| `walks` ↔ `pets`, vía `walk_pets` | Un paseo tiene cero o muchas reservas; una mascota puede participar en distintos paseos. |
-| `walks` → `reviews` | Un paseo tiene cero o muchas reseñas; cada reseña corresponde a un paseo. |
-| `users` → `reviews` | Un dueño escribe cero o muchas reseñas; cada reseña tiene un autor. |
-
-## Tipos, estados y transiciones
-
-| Tipo | Valores |
-| --- | --- |
-| `user_role` | `OWNER`, `WALKER` |
-| `pet_size` | `SMALL`, `MEDIUM`, `LARGE`; dato opcional |
-| `walk_status` | `PUBLISHED`, `COMPLETED`, `CANCELLED` |
+| Type | Values |
+|---|---|
+| `user_role` | `CLIENT`, `WALKER` |
+| `pet_size` | `SMALL`, `MEDIUM`, `LARGE` (optional) |
+| `walk_status` | `PUBLISHED`, `FULL`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
 | `booking_status` | `JOINED`, `CANCELLED` |
 
-Paseos: `PUBLISHED` puede pasar a `CANCELLED` o `COMPLETED`; los estados finales no vuelven a publicarse. Se completa después de finalizar el intervalo. Reservas: `JOINED` puede pasar a `CANCELLED` antes del inicio. Puede reactivarse como `JOINED` si el paseo sigue publicado, futuro y con cupo; se reutiliza la fila. No hay transiciones después del inicio salvo la cancelación del paseo por su paseador, que cancela sus reservas activas.
+Capacity changes move a scheduled walk between `PUBLISHED` and `FULL`. The walker can start it with at least one active booking, then complete it from `IN_PROGRESS`. A cancelled walk also cancels its active bookings. Completed and cancelled walks are final states. PostgreSQL enums restrict values; the service checks transitions.
 
-Los ENUM restringen valores posibles, pero no controlan por sí mismos las transiciones: eso corresponde al backend.
+## Database Constraints and Service Rules
 
-## Restricciones implementadas en SQL
+- Foreign keys require referenced records to exist. The service checks roles and ownership separately.
+- Email is unique without regard to case. Neighborhood and city, walker and neighborhood, walk and pet, and walk and review author are also unique pairs.
+- Duration and capacity must be positive. Prices must be non-negative, and review ratings must be integers from one to five.
+- Booking and cancellation lock the walk row and recheck capacity. Rebooking updates the existing row. Each booking request covers one pet.
+- The service checks coverage and overlapping walks before publishing. It only allows owners to review a completed walk they took part in.
+- There are no cascading deletes. Cancellation keeps the history.
 
-- PK UUID con generación predeterminada; todas las relaciones usan FKs.
-- Email único mediante índice sobre `LOWER(email)`; además el servicio normaliza espacios y formato al registrar.
-- Barrio/ciudad, cobertura, paseo/mascota y paseo/autor sin duplicados.
-- Duración y cupo mayores que cero; precios no negativos; puntuación entera entre 1 y 5.
-- Promedio entre 0 y 5 y cantidad de reseñas no negativa. Sin reseñas, ambos agregados comienzan en cero.
-- Un dueño no tiene valores de precio/cupo predeterminados del paseador.
-- Fechas de creación, estado inicial y usuario activo con valores por defecto.
-- Sin borrado en cascada para preservar el historial.
-- Índices para búsquedas por zona/estado/fecha y consultas por propietario/paseador.
-
-## Reglas a implementar en los servicios
-
-| Regla | Control planificado |
-| --- | --- |
-| Rol correcto | `pets.owner_id` y `reviews.author_id` deben apuntar a `OWNER`; `walks.walker_id` y `walker_zones.walker_id` a `WALKER` activo. Una FK a `users` no garantiza el rol. |
-| Autorización | Actor autenticado administra solo sus mascotas, su cobertura y sus paseos; reserva/reseña como dueño. |
-| Cobertura | La zona de un paseo debe estar en `walker_zones` del paseador al publicar. |
-| Horarios | Publicar solo fechas futuras y evitar solapamiento del mismo paseador: los intervalos `[inicio, fin)` no se intersectan. Bloqueo por paseador durante validación/escritura. |
-| Cupo | Contar filas `JOINED`; no superar `walks.capacity`. Bloquear el paseo antes de comprobar e insertar/reactivar. |
-| Reserva múltiple | Validar todas las mascotas y lugares, y confirmar todo en una única transacción. |
-| Cancelación | Validar estado/horario; cancelar el paseo cancela sus reservas `JOINED` en la misma transacción. |
-| Reseña elegible | Paseo completado y participación efectiva del dueño; luego recalcular agregados del paseador en la misma transacción. |
-
-
-## Criterios de representación
-
-Los importes usan `NUMERIC`, evitando errores de coma flotante. Para el MVP se interpretan en pesos argentinos (ARS); no existe soporte multimoneda. `timestamp` representa hora local de CABA y requiere configuración consistente en toda la aplicación. Las zonas no almacenan geometrías; `meeting_point` es texto.
-
+We use `NUMERIC` for prices in Argentine pesos and store dates and times as local timestamps for Buenos Aires. The database does not contain map polygons or meeting point coordinates.

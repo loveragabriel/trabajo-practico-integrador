@@ -1,42 +1,28 @@
-# Catálogo de zonas y respuestas de error
+# Neighborhood Catalog and API Errors
 
-Compartimos el catálogo de barrios entre el registro, los perfiles, la cobertura y la búsqueda. Los identificadores vienen de la base de datos; no mantenemos una segunda lista de UUID en el frontend.
+Registration, profiles, coverage and search share the same neighborhood catalog. The frontend uses the IDs returned by the backend.
 
-## Consulta de barrios
+| Endpoint | Response |
+|---|---|
+| `GET /api/zones` | Returns `{id, name, city}` entries sorted by name, or an empty list. |
+| `GET /api/zones/{id}` | Returns a neighborhood. An unknown UUID returns `404`; an invalid UUID format returns `400`. |
 
-| Método y ruta | Respuesta |
-| --- | --- |
-| `GET /api/zones` | Lista de `{id, name, city}` ordenada por nombre. Devuelve `[]` si no hay barrios. |
-| `GET /api/zones/{id}` | Devuelve el barrio solicitado. Un UUID inexistente devuelve `404`; un formato inválido devuelve `400`. |
+Both endpoints are public and the catalog is read-only. The API does not return coordinates or polygons; the map uses approximate positions from the frontend.
 
-Ambas consultas son públicas y no necesitan un token. El catálogo es de solo lectura: no ofrecemos operaciones para crear, editar ni eliminar barrios desde la API. Con una sesión válida, un método no implementado sobre una ruta existente devuelve `405`.
+## API Errors
 
-Las respuestas no incorporan coordenadas ni polígonos. Para comprobar la existencia de un barrio podemos usar `ZoneService.findById` o `ZoneRepository.findById`.
+The API returns a common `ApiError` response without stack traces or credentials. `RequestFormatExceptionHandler` handles malformed requests and unsupported HTTP methods.
 
-## Errores
+| Situation | Status |
+|---|---|
+| Invalid parameter format, missing required parameter or invalid JSON | `400` |
+| Missing or invalid session on a protected route | `401` |
+| Signed-in user lacks permission | `403` |
+| Unsupported method on an existing route | `405`, with an `Allow` header |
+| Unsupported content type | `415` |
 
-Mantenemos el formato común `ApiError` para errores de validación, formato, autenticación y reglas del negocio. `RequestFormatExceptionHandler` se ocupa de los errores de formato y de métodos HTTP; los demás casos siguen en los manejadores compartidos.
+## Frontend
 
-| Situación | Estado HTTP |
-| --- | --- |
-| UUID, número o fecha con formato inválido | `400`. |
-| Parámetro obligatorio ausente | `400`. |
-| JSON ilegible | `400`. |
-| Método no implementado para una ruta existente | `405`, con encabezado `Allow`. |
-| Tipo de contenido no admitido | `415`. |
-| Sesión requerida ausente o inválida | `401`. |
-| Usuario autenticado sin permiso | `403`. |
+The `features/map` module includes the catalog request, `useZones`, reusable selectors and `ZoneCoverageMap`. The catalog hook tracks loading and errors, supports retries and ignores stale responses.
 
-Los mensajes no devuelven trazas, contraseñas ni detalles internos del servidor.
-
-## Componentes de React
-
-Los componentes están en `frontend/src/features/map`.
-
-- `loadZones(token?, signal?)` consulta el catálogo público, valida su formato y permite cancelar la petición. El token es opcional para mantener la compatibilidad con las pantallas que ya lo envían.
-- `useZones(token?)` gestiona la carga, los errores y el reintento. Descarta respuestas que pertenecen a una consulta anterior.
-- `ZoneSelect` recibe el barrio elegido y los barrios disponibles.
-- `ZoneCatalog` combina el selector con los estados de carga, error y lista vacía.
-- `ZoneCoverageMap` representa los barrios mediante referencias geográficas aproximadas.
-
-La integración con los filtros está explicada en [Búsqueda de paseos y mapa](avance-busqueda.md). Los comandos para levantar el proyecto y ejecutar las pruebas están en [Ejecución local](ejecucion-local.md).
+See [walk search](avance-busqueda.md) and the [local setup guide](ejecucion-local.md).

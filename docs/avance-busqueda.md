@@ -1,49 +1,25 @@
-# Búsqueda de paseos y mapa
+# Walk Search and Map
 
-Integramos la búsqueda con el catálogo de barrios y el mapa para consultar las salidas disponibles por zona y horario. Usamos los datos de la base y mostramos un resultado vacío cuando todavía no hay paseos que cumplan los filtros.
+Once signed in, owners can find published future walks by neighborhood, date or time. Search only includes walks with available spots and an active walker. Only `JOINED` bookings count toward capacity.
 
-## Funcionamiento
+A result shows the neighborhood, start time, duration, meeting point, price per pet, remaining spots and walker rating. It does not show the walker's private contact details. The frontend keeps filters and pagination in the URL so the same results can be reopened after a refresh or a visit to the walk details.
 
-Consultamos únicamente paseos publicados, futuros, con lugares libres y asociados a un paseador activo con rol `WALKER`. Calculamos los lugares libres restando de `capacity` las reservas `JOINED`. Las canceladas no ocupan lugar.
+## API
 
-Cada tarjeta muestra el barrio, la fecha y hora, la duración, el punto de encuentro, el precio por mascota y los lugares disponibles. Del paseador mostramos su nombre, promedio y cantidad de reseñas. No exponemos teléfono, email ni contraseña.
+`GET /api/walks` requires a signed-in account.
 
-En el frontend conservamos los filtros en la URL para poder compartir la búsqueda, recargarla y volver a un resultado anterior. Incluimos paginación, carga, error, reintento y lista vacía.
+| Parameter | Meaning |
+|---|---|
+| `zoneId` | Neighborhood UUID. If omitted, the API uses the account's home neighborhood. |
+| `startsFrom` | Inclusive start of the range, in local Buenos Aires time. |
+| `startsTo` | Exclusive end of the range. It must be later than `startsFrom` when both are supplied. |
+| `page` | Zero-based page number, default `0`. |
+| `size` | Page size from 1 to 50, default `12`. |
 
-## Contrato de la API
+The response contains `items`, `page`, `size` and `hasNext`. Results are sorted by start time and UUID. Invalid filters return `400` in the common `ApiError` format.
 
-La consulta es pública: `GET /api/walks`.
+## Map and Availability
 
-| Parámetro | Uso |
-| --- | --- |
-| `zoneId` | UUID del barrio. Sin este parámetro consultamos todas las zonas. Un UUID inexistente devuelve una lista vacía. |
-| `startsFrom` | Inicio del rango, incluido. Fecha y hora local de CABA, por ejemplo `2030-01-01T10:00:00`. |
-| `startsTo` | Fin del rango, sin incluir. Cuando se envían ambos límites, debe ser posterior a `startsFrom`. |
-| `page` | Página desde cero. El valor predeterminado es `0`. |
-| `size` | Tamaño de página entre 1 y 50. El valor predeterminado es `12`, que también usa la pantalla. |
+The map shows approximate neighborhood locations. The meeting point is the text the walker entered when publishing the walk. Availability can change after a search, so the booking transaction checks it again before confirming.
 
-La respuesta contiene `items`, `page`, `size` y `hasNext`. Ordenamos los paseos por horario de inicio y luego por UUID. Con los mismos datos, ese orden permite recorrer las páginas de manera estable.
-
-Un filtro mal formado o un rango inválido devuelve `400` con el formato `ApiError`. El acceso público alcanza solo a esta consulta: las escrituras y las otras rutas mantienen sus permisos.
-
-La consulta usa JDBC y parámetros SQL sobre las tablas actuales. No genera paseos de ejemplo ni modifica reservas. Al implementar la publicación, los paseos guardados en `walks` aparecerán en esta búsqueda si cumplen sus condiciones.
-
-## Mapa y presentación
-
-El mapa enfoca el barrio seleccionado. Sin un filtro de barrio, muestra las referencias del catálogo. Las ubicaciones son aproximadas y sirven para orientar la búsqueda; el punto de encuentro es el publicado en cada paseo.
-
-El diseño de la búsqueda usa fondos claros, tarjetas redondeadas y botones azules. El mapa no muestra recorridos ni la posición de personas o mascotas. Las reseñas solo se presentan cuando existen datos; si el paseador todavía no tiene reseñas, lo indicamos en la tarjeta.
-
-## Lo que falta integrar
-
-Los paseos creados desde [Publicación de paseos](publicacion-paseos.md) aparecen en la búsqueda si están publicados, son futuros y tienen cupo. Queda integrar la cancelación, los cambios de estado y el historial del cliente con las reservas.
-
-El cupo que muestra una búsqueda puede cambiar. La futura operación de reserva tendrá que comprobarlo nuevamente dentro de una transacción con bloqueo. La consulta por sí sola no garantiza un lugar.
-
-También tenemos pendiente unificar el diseño del inicio, el registro y el encabezado con la referencia visual. Mantendremos los formularios y los contratos que ya funcionan al trabajar en esas pantallas.
-
-## Verificación
-
-Podemos abrir `/walks` sin iniciar sesión, elegir un barrio y un horario, recargar el enlace y comprobar que los filtros se conservan. Una fecha Hasta igual o anterior a Desde debe mostrar un mensaje. Los paseos cancelados, pasados o completos no deben aparecer en los resultados.
-
-Los comandos de arranque, las consultas curl y las pruebas con una base separada están en [Ejecución local](ejecucion-local.md).
+To check the flow, choose a neighborhood and a date, reload the results, and open a walk. Past, full and cancelled walks should not appear as bookable. The [local setup guide](ejecucion-local.md) has the full walkthrough.

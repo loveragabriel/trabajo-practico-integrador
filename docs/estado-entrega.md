@@ -1,13 +1,13 @@
-# Estado de la entrega
+# Delivery Status
 
-## Qué se puede probar
+## What You Can Try
 
-| Tema | Qué muestra la aplicación |
-| --- | --- |
-| Cuenta y perfil | Registro e ingreso de ambos roles. El dueño puede agregar su primera mascota al registrarse; el paseador conserva su editor de perfil y cobertura. |
-| Paseos y agenda | El paseador publica en su cobertura, consulta próximas salidas e historial e inicia o finaliza sus paseos. |
-| Búsqueda y reservas | El dueño puede filtrar por barrio, día y horario, reservar para una mascota propia, cancelar dentro del plazo y volver a reservar si hay lugar. |
-| Historial y reseñas | La reserva aparece en Próximas, En curso o Historial, según el estado. Si el dueño participó, desde el Historial puede calificar el paseo finalizado. |
-| Validaciones | Hay pruebas para horarios superpuestos, permisos, último cupo, transiciones y clasificación de reservas. No se admiten inscripciones al alcanzar la hora de inicio. |
+| Area | What you can do in the app |
+|---|---|
+| Accounts and profiles | Sign up and sign in as an owner or a walker. Owners can add their first pet during sign-up. Walkers can update their profile and service areas. |
+| Walks and schedule | Publish a walk in a neighborhood you cover, check upcoming and past walks, and start or finish a walk. |
+| Search and bookings | Filter by neighborhood, date or time, book for one of your pets, cancel within the allowed window, and rebook if a spot is available. |
+| Booking history and reviews | Find a booking under Upcoming, In progress or History. From History, you can review a completed walk you took part in. |
+| Checks | Tests cover overlapping walks, permissions, the last available spot, status changes and how bookings are grouped. You cannot join a walk once its scheduled start time arrives. |
 
-El paso a paso y los comandos están en la [guía de ejecución local](ejecucion-local.md). El [informe](informe-final-paseadores.pdf) incluye el modelo de datos y las capturas de los dos roles.
+The [local setup guide](ejecucion-local.md) has the commands and a walkthrough. The [final report](paseadores-final-report-en.pdf) includes the data model and screenshots for both roles.

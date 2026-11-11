@@ -1,92 +1,41 @@
 # Frontend
 
-Web app for Paseadores — TypeScript + React, built with Vite and styled with Tailwind CSS v4. Leaflet + OpenStreetMap will be used for the zone map. See `docs/modulos.md` for what each module does.
+The Paseadores web app uses React, TypeScript, Vite, Tailwind CSS and Leaflet. We use Node.js 24 and pnpm 11.25.0 for development.
 
-## Requirements
+## Run and Test
 
-- Node.js 20.19+ or 22.12+
-- pnpm (`npm install -g pnpm`, or `corepack enable`)
-
-## Running
+From `frontend/`:
 
 ```bash
-pnpm install
-pnpm dev        # http://localhost:5173
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-During development, requests to `/api/*` are proxied to the backend at `http://localhost:8080` (see `vite.config.ts`), so the app calls relative URLs like `/api/walks` without CORS setup.
+Vite serves the app on port 5173 and forwards `/api` requests to Spring Boot on port 8080. Start the backend first as described in the [local setup guide](../docs/ejecucion-local.md).
 
-## Scripts
-
-| Command | What it does |
+| Command | Purpose |
 |---|---|
-| `pnpm dev` | Dev server with hot reload |
-| `pnpm build` | Type-check (`tsc -b`) and production build into `dist/` |
-| `pnpm preview` | Serve the production build locally |
-| `pnpm lint` | Lint with Oxlint |
+| `pnpm dev` | Start the development server |
+| `pnpm build` | Type-check and build into `dist/` |
+| `pnpm preview` | Preview the production build |
+| `pnpm lint` | Run Oxlint |
+| `node --import ./tests/register-hooks.mjs --test tests/*.test.ts` | Run the frontend test suite |
 
-## Styling
+## Source Layout
 
-Tailwind CSS v4 is wired through the `@tailwindcss/vite` plugin and imported in `src/index.css` (`@import 'tailwindcss';`). There is no `tailwind.config.js`; theme customizations go in `src/index.css` with `@theme`.
+- `src/app/` wires together the router, layout, providers and top-level pages.
+- `src/features/` groups the pages, components, hooks and API calls for authentication, profiles, pets, walks, bookings, reviews and the map.
+- `src/shared/` contains reusable components, types and the HTTP client. The client adds the JWT to authenticated requests.
 
-## Structure
+Use `src/app/paths.ts` for route paths and the `@/` alias for imports from `src/`. Tailwind v4 is imported and configured in `src/index.css`.
 
-Feature-based: each module owns everything it needs, mirroring the backend packages. `src/main.tsx` renders `src/app/App.tsx`.
+## Routes
 
-```
-src/
-├── app/                      # wires the app together
-│   ├── App.tsx               # providers + router
-│   ├── router.tsx            # route tree and access guards
-│   ├── paths.ts              # every URL of the app
-│   ├── AppLayout.tsx         # header + role-based navigation
-│   └── pages/                # pages that belong to no module: Home, NotFound
-├── features/
-│   ├── auth/
-│   │   ├── index.ts          # public API: AuthProvider, useAuth, RequireAuth, GuestOnly
-│   │   ├── pages/            # Login, Register
-│   │   ├── guards/           # RequireAuth, GuestOnly (route access)
-│   │   ├── hooks/            # useAuth
-│   │   └── context/          # AuthContext (types), AuthProvider (session state)
-│   ├── walks/pages/          # WalkSearch, WalkDetail, MyWalks, PublishWalk
-│   ├── bookings/pages/       # MyBookings (client's schedule and history)
-│   ├── pets/pages/           # Pets, PetForm
-│   ├── profile/pages/        # Profile, WalkerProfile
-│   ├── reviews/              # (to do) rating form and review list
-│   └── map/                  # (to do) zone catalog and coverage map (Leaflet)
-└── shared/                   # business-agnostic code
-    ├── api/client.ts         # HTTP client (attaches the JWT)
-    ├── components/           # generic UI: PageHeader...
-    └── types/
-```
-
-As a module grows, its folder gains `components/`, `hooks/`, `api.ts` and `types.ts` next to `pages/`. Create folders when there is code to put in them. Hooks that belong to a module go in its `hooks/`; only business-agnostic hooks (e.g. `useDebounce`) go in `shared/hooks/`.
-
-### Where does a file go?
-
-1. Belongs to one module → `features/<module>/`.
-2. Used by several modules and knows nothing about the business → `shared/`.
-3. Wires the app (routes, providers, layout) → `app/`.
-
-### Dependency rules
-
-- A feature may import from `shared/`.
-- Code outside a feature imports it **only through its `index.ts`** (its public API): `import { useAuth } from '@/features/auth'`, never `'@/features/auth/hooks/useAuth'`. A feature gets an `index.ts` once something outside it needs it.
-- Inside a feature, files import each other by their direct path.
-- `app/router.tsx` is the only place that imports pages directly, to build the routes.
-
-### Routes
-
-All URLs live in `src/app/paths.ts`. For routes with params use `generatePath(paths.walkDetail, { walkId })`.
-
-| Access | Routes |
+| Access | Main routes |
 |---|---|
-| Public | `/`, `/walks`, `/walks/:walkId`, `/walkers/:walkerId` |
-| Guests only | `/login`, `/register` |
-| Any signed-in user | `/profile` |
-| `CLIENT` | `/pets`, `/pets/new`, `/pets/:petId/edit`, `/bookings` |
-| `WALKER` | `/my-walks`, `/my-walks/new` |
+| Visitors | `/`, `/login`, `/register` |
+| Signed-in users | `/profile`, `/walks`, `/walks/:walkId`, `/walkers/:walkerId` |
+| Pet owners | `/pets`, `/pets/new`, `/pets/:petId/edit`, `/bookings` |
+| Walkers | `/my-walks`, `/my-walks/new`, `/my-walks/:walkId/published` |
 
-### Imports
-
-Use the `@/` alias (maps to `src/`, configured in `vite.config.ts` and `tsconfig.app.json`): `import { PageHeader } from '@/shared/components/PageHeader'`. Relative imports only within the same folder.
+Route guards help users find the right screens. The backend still checks role and ownership before returning protected data or accepting changes.
