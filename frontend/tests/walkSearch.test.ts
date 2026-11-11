@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { apiClient, ApiRequestError } from '../src/shared/api/client.ts'
-import { formatWalkDate, loadWalks, readWalkFilters, walkSearchParams } from '../src/features/walks/api/search.ts'
+import { formatWalkDate, loadWalks, readWalkFilters, walkBrowseDays, walkSearchParams } from '../src/features/walks/api/search.ts'
 
 const originalGet = apiClient.get
 afterEach(() => { apiClient.get = originalGet })
@@ -83,4 +83,11 @@ test('conserva la cancelación para descartar una búsqueda anterior', async () 
     return { data: { items: [], page: 0, size: 12, hasNext: false } }
   }) as typeof apiClient.get
   await assert.rejects(loadWalks(filters, controller.signal), (error: unknown) => error instanceof DOMException && error.name === 'AbortError')
+})
+
+test('los días rápidos cruzan fin de mes en el horario de Buenos Aires', () => {
+  const [today, tomorrow] = walkBrowseDays(new Date('2030-02-01T01:20:00Z'))
+  assert.deepEqual(today, { from: '2030-01-31T00:00', to: '2030-02-01T00:00', label: 'Hoy', date: 31 })
+  assert.equal(tomorrow.from, today.to)
+  assert.equal(tomorrow.to, '2030-02-02T00:00')
 })

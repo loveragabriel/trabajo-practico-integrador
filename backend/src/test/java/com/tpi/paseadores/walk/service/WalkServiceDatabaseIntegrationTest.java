@@ -4,6 +4,7 @@ import com.tpi.paseadores.shared.exception.BusinessRuleViolationException;
 import com.tpi.paseadores.shared.exception.ForbiddenActionException;
 import com.tpi.paseadores.shared.exception.ResourceNotFoundException;
 import com.tpi.paseadores.walk.domain.WalkStatus;
+import com.tpi.paseadores.walk.dto.ClientBookingPeriod;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkCreateRequest;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
@@ -389,6 +390,28 @@ class WalkServiceDatabaseIntegrationTest {
             assertThatThrownBy(() -> service.updateStatus(walker, walkId, WalkStatus.IN_PROGRESS))
                     .isInstanceOf(BusinessRuleViolationException.class);
             assertThat(status(walkId)).isEqualTo("PUBLISHED");
+        }
+
+        @Test
+        void clientBookingMovesThroughTabsEvenBeforeScheduledEnd() {
+            UUID walkId = walk(1);
+            UUID pet = pet(client);
+            bookingService.join(client, walkId, pet);
+
+            assertThat(bookingService.myBookings(client, ClientBookingPeriod.UPCOMING, 0, 12).items())
+                    .singleElement().satisfies(booking -> assertThat(booking.walkId()).isEqualTo(walkId));
+            assertThat(bookingService.myBookings(client, ClientBookingPeriod.IN_PROGRESS, 0, 12).items()).isEmpty();
+
+            service.updateStatus(walker, walkId, WalkStatus.IN_PROGRESS);
+            assertThat(bookingService.myBookings(client, ClientBookingPeriod.UPCOMING, 0, 12).items()).isEmpty();
+            assertThat(bookingService.myBookings(client, ClientBookingPeriod.IN_PROGRESS, 0, 12).items())
+                    .singleElement().satisfies(booking -> assertThat(booking.walkId()).isEqualTo(walkId));
+            assertThat(bookingService.myBookings(otherClient, ClientBookingPeriod.IN_PROGRESS, 0, 12).items()).isEmpty();
+
+            service.updateStatus(walker, walkId, WalkStatus.COMPLETED);
+            assertThat(bookingService.myBookings(client, ClientBookingPeriod.IN_PROGRESS, 0, 12).items()).isEmpty();
+            assertThat(bookingService.myBookings(client, ClientBookingPeriod.HISTORY, 0, 12).items())
+                    .singleElement().satisfies(booking -> assertThat(booking.walkStatus()).isEqualTo(WalkStatus.COMPLETED));
         }
 
         private boolean attempt(CountDownLatch ready, CountDownLatch startTogether, UUID actor, UUID walkId, UUID petId)

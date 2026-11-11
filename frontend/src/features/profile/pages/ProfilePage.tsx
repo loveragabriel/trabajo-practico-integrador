@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom'
+import { paths } from '@/app/paths'
+import { Icon } from '@/shared/components/Icon'
 import { useAuth } from '@/features/auth'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ClientOwnProfile } from '../components/ClientOwnProfile'
@@ -21,6 +24,12 @@ export function ProfilePage() {
           title="Mi perfil"
           description={profile?.role === 'CLIENT' ? 'Tus datos de contacto y zona.' : undefined}
         />
+      )}
+
+      {session?.user.role === 'CLIENT' && (
+        <Link to={paths.pets} className="mt-4 flex items-center gap-2 rounded-2xl bg-surface-container-lowest p-4 font-semibold text-primary shadow-sm">
+          <Icon name="pets" className="text-xl" /> Mis mascotas <Icon name="chevron_right" className="ml-auto text-xl" />
+        </Link>
       )}
 
       {loading && <p role="status" className="mt-6 text-slate-600">Cargando tu perfil…</p>}

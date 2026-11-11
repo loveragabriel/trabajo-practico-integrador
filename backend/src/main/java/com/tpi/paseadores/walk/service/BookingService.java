@@ -11,8 +11,8 @@ import com.tpi.paseadores.user.domain.UserRole;
 import com.tpi.paseadores.user.service.UserService;
 import com.tpi.paseadores.walk.domain.Walk;
 import com.tpi.paseadores.walk.dto.BookingResponse;
+import com.tpi.paseadores.walk.dto.ClientBookingPeriod;
 import com.tpi.paseadores.walk.dto.ClientBookingResponse;
-import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.repository.WalkRepository;
 import com.tpi.paseadores.walk.repository.WalkSearchRepository;
 import org.springframework.stereotype.Service;
@@ -70,7 +70,7 @@ public class BookingService {
 
     // "mis reservas" del cliente: simétrico a WalkService.mine() del paseador
     @Transactional(readOnly = true)
-    public PageResponse<ClientBookingResponse> myBookings(UUID actorId, WalkAgendaPeriod period, int page, int size) {
+    public PageResponse<ClientBookingResponse> myBookings(UUID actorId, ClientBookingPeriod period, int page, int size) {
         requireRole(actorId, UserRole.CLIENT);
         Pagination.validate(page, size);
         var rows = walkSearchRepository.findBookingsForClient(actorId, period, LocalDateTime.now(clock), page, size);

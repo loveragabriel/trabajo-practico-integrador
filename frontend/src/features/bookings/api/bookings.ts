@@ -1,9 +1,10 @@
 import { apiClient, ApiRequestError } from '@/shared/api/client'
+import { walkStatusLabels, type WalkStatus } from '@/features/walks/api/walkReadContract'
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export type BookingStatus = 'JOINED' | 'CANCELLED'
-export type AgendaPeriod = 'UPCOMING' | 'HISTORY'
+export type ClientBookingPeriod = 'UPCOMING' | 'IN_PROGRESS' | 'HISTORY'
 
 export interface Booking {
   id: string
@@ -19,6 +20,7 @@ export interface ClientBooking {
   petId: string
   petName: string
   walkId: string
+  walkStatus: WalkStatus
   startTime: string
   endTime: string
   meetingPoint: string
@@ -33,6 +35,7 @@ function isClientBooking(value: unknown): value is ClientBooking {
   if (!value || typeof value !== 'object') return false
   const b = value as ClientBooking
   return uuid.test(b.bookingId) && (b.bookingStatus === 'JOINED' || b.bookingStatus === 'CANCELLED')
+    && Object.hasOwn(walkStatusLabels, b.walkStatus)
     && uuid.test(b.petId) && typeof b.petName === 'string' && uuid.test(b.walkId)
     && typeof b.startTime === 'string' && typeof b.endTime === 'string' && typeof b.meetingPoint === 'string'
     && typeof b.pricePerPet === 'number' && Number.isFinite(b.pricePerPet) && b.pricePerPet >= 0
@@ -53,7 +56,7 @@ export async function cancelBooking(walkId: string, petId: string): Promise<void
 }
 
 // "mis reservas": simétrico a la agenda del paseador
-export async function loadMyBookings(period: AgendaPeriod, page: number, signal?: AbortSignal): Promise<ClientBookingsResult> {
+export async function loadMyBookings(period: ClientBookingPeriod, page: number, signal?: AbortSignal): Promise<ClientBookingsResult> {
   const { data } = await apiClient.get<ClientBookingsResult>('/walks/bookings/mine', {
     params: { period, page, size: 12 }, signal,
   })

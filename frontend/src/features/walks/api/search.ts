@@ -138,3 +138,18 @@ export function walkTimeOnly(startTime: string) {
 export function minutesUntilWalk(startTime: string) {
   return Math.round((new Date(`${startTime}-03:00`).getTime() - Date.now()) / 60000)
 }
+
+export function walkBrowseDays(now = new Date()) {
+  const [year, month, day] = baDayOf(now).split('-').map(Number)
+  const dateFor = (offset: number) => new Date(Date.UTC(year, month - 1, day + offset))
+  const weekday = new Intl.DateTimeFormat('es-AR', { timeZone: 'UTC', weekday: 'short' })
+  return Array.from({ length: 7 }, (_, offset) => {
+    const date = dateFor(offset)
+    return {
+      from: date.toISOString().slice(0, 16),
+      to: dateFor(offset + 1).toISOString().slice(0, 16),
+      label: offset === 0 ? 'Hoy' : weekday.format(date).replace('.', ''),
+      date: date.getUTCDate(),
+    }
+  })
+}

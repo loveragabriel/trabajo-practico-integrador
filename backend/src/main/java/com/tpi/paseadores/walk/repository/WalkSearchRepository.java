@@ -3,6 +3,7 @@ package com.tpi.paseadores.walk.repository;
 import com.tpi.paseadores.pet.domain.PetSize;
 import com.tpi.paseadores.walk.domain.BookingStatus;
 import com.tpi.paseadores.walk.domain.WalkStatus;
+import com.tpi.paseadores.walk.dto.ClientBookingPeriod;
 import com.tpi.paseadores.walk.dto.ClientBookingResponse;
 import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
@@ -111,13 +112,17 @@ public class WalkSearchRepository {
 
     // read model de "mis reservas": simétrico a findAgenda pero partiendo de walk_pets del cliente,
     // no de walks del paseador
-    public List<ClientBookingResponse> findBookingsForClient(UUID clientId, WalkAgendaPeriod period,
+    public List<ClientBookingResponse> findBookingsForClient(UUID clientId, ClientBookingPeriod period,
                                                                LocalDateTime now, int page, int size) {
-        boolean upcoming = period == WalkAgendaPeriod.UPCOMING;
-        String condition = upcoming
-                ? " AND b.status = 'JOINED' AND w.end_time > :now"
-                : " AND (b.status <> 'JOINED' OR w.end_time <= :now)";
-        String order = upcoming ? " ASC" : " DESC";
+        String condition = switch (period) {
+            case UPCOMING -> " AND b.status = 'JOINED' AND w.status IN ('PUBLISHED', 'FULL') AND w.end_time > :now";
+            case IN_PROGRESS -> " AND b.status = 'JOINED' AND w.status = 'IN_PROGRESS'";
+            case HISTORY -> """
+                 AND (b.status = 'CANCELLED' OR w.status IN ('COMPLETED', 'CANCELLED')
+                 OR (w.status IN ('PUBLISHED', 'FULL') AND w.end_time <= :now))
+                """;
+        };
+        String order = period == ClientBookingPeriod.HISTORY ? " DESC" : " ASC";
         var params = new MapSqlParameterSource("clientId", clientId)
                 .addValue("now", Timestamp.valueOf(now)).addValue("limit", size + 1)
                 .addValue("offset", (long) page * size);

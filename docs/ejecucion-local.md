@@ -15,7 +15,7 @@ pnpm --version
 Si pnpm no está instalado:
 
 ```bash
-npm install -g pnpm
+npm install -g pnpm@11.25.0
 ```
 
 Los comandos siguientes parten de la raíz de `trabajo-practico-integrador` y están preparados para Git Bash en Windows.
@@ -69,23 +69,18 @@ pnpm dev
 
 Abrimos `http://localhost:5173`. Para revisar directamente la búsqueda, usamos `http://localhost:5173/walks`.
 
-Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda puede abrirse sin sesión. Si no hay paseos publicados en la base, veremos una lista vacía. Para crear uno seguimos [Publicación de paseos](publicacion-paseos.md); las reservas siguen pendientes.
+Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda requiere una cuenta. Si no hay paseos publicados, la lista aparece vacía. Para crear uno seguimos [Publicación de paseos](publicacion-paseos.md).
 
-## Comprobar la API
+## Probar el recorrido completo
 
-Con ambos procesos en ejecución, desde otra terminal:
+1. Entrá como paseador, configurá un barrio en **Mi perfil** y publicá una salida futura con un solo lugar.
+2. En otro perfil del navegador, registrate como dueño, agregá una mascota y buscá la salida por barrio y día. Abrí el detalle y reservá para esa mascota.
+3. En **Mis reservas → Próximas**, cancelá si faltan más de dos horas, verificá la cancelación en **Historial** y volvé a reservar.
+4. Como paseador, iniciá la salida. Como dueño, comprobá que aparezca en **En curso**. Finalizala como paseador, volvé a **Historial** y elegí **Calificar el paseo**.
 
-```bash
-curl --fail-with-body -sS 'http://localhost:8080/api/zones'
-curl --fail-with-body -sS 'http://localhost:8080/api/walks?size=12'
-curl -i 'http://localhost:8080/api/walks?zoneId=no-es-un-uuid'
-curl -i 'http://localhost:8080/api/walks?startsFrom=2030-01-02T10%3A00&startsTo=2030-01-01T10%3A00'
-curl -i -X POST 'http://localhost:8080/api/walks'
-```
+El fondo del mapa requiere conexión a OpenStreetMap. El mapa indica el barrio, no el seguimiento de la salida.
 
-Esperamos `200` en las dos primeras consultas, `400` en los filtros inválidos y `401` en el POST sin sesión.
-
-En la interfaz comprobamos el selector de barrio, los filtros de horario, la recarga del enlace, la limpieza y el resultado vacío. El fondo del mapa requiere conexión a OpenStreetMap.
+El catálogo de barrios (`GET /api/zones`) responde sin token. Para consultar paseos, agenda o reservas desde Swagger, iniciá sesión con una cuenta de prueba y autorizá el token; las rutas protegidas responden `401` sin una sesión válida.
 
 ## Pruebas
 

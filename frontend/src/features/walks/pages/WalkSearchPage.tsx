@@ -1,3 +1,5 @@
+import { useAuth } from '@/features/auth'
+import { ClientWalkSearch } from '../components/ClientWalkSearch'
 import { useSearchParams } from 'react-router-dom'
 import { locateZone, useZones, ZoneCoverageMap } from '@/features/map'
 import { WalkCard } from '../components/WalkCard'
@@ -5,6 +7,11 @@ import { WalkFiltersForm } from '../components/WalkFiltersForm'
 import { useWalkSearch } from '../hooks/useWalkSearch'
 
 export function WalkSearchPage() {
+  const { session } = useAuth()
+  return session?.user.role === 'CLIENT' ? <ClientWalkSearch name={session.user.name} /> : <GeneralWalkSearch />
+}
+
+function GeneralWalkSearch() {
   const [params, setParams] = useSearchParams()
   const query = params.toString()
   const catalog = useZones()

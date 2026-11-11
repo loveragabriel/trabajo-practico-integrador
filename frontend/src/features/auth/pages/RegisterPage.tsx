@@ -1,5 +1,5 @@
 import { useId, useState, type SubmitEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { register } from '@/features/auth/api/auth'
 import { usePublicZones } from '@/features/auth/hooks/usePublicZones'
@@ -32,7 +32,7 @@ function RoleCard({ selected, onClick, icon, iconFilled, title, subtitle }: Role
       onClick={onClick}
       aria-pressed={selected}
       className={`relative flex flex-col items-start rounded-xl p-3.5 text-left shadow-sm transition-all duration-200 ${
-        selected ? 'bg-primary-fixed/30' : 'bg-surface-container-lowest'
+        selected ? 'bg-primary-fixed/30 ring-2 ring-primary' : 'bg-surface-container-lowest'
       }`}
     >
       <span
@@ -179,7 +179,7 @@ function WalkerCoverageStep({ zones, onDone }: { zones: Zone[]; onDone: () => vo
 }
 
 export function RegisterPage() {
-  const { signIn } = useAuth()
+  const { session, signIn } = useAuth()
   const navigate = useNavigate()
   const { zones } = usePublicZones()
 
@@ -189,7 +189,7 @@ export function RegisterPage() {
   const zoneFieldId = useId()
   const passwordId = useId()
 
-  const [step, setStep] = useState<'profile' | 'coverage'>('profile')
+  const [step, setStep] = useState<'profile' | 'coverage' | 'firstPet'>('profile')
   const [pendingSession, setPendingSession] = useState<Session | null>(null)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -205,9 +205,6 @@ export function RegisterPage() {
     navigate(paths.home, { replace: true })
   }
 
-  // recién acá actualizamos el contexto de auth (signIn de verdad): si lo hiciéramos antes,
-  // GuestOnly (que envuelve esta ruta) redirige a home apenas detecta sesión y desmonta la
-  // página con el paso 2 todavía pendiente
   function finishWalkerSetup() {
     if (pendingSession) signIn(pendingSession)
     goHome()
@@ -228,14 +225,13 @@ export function RegisterPage() {
       })
       // TODO: mostrar un modal de bienvenida acá antes de navegar ("Cuenta creada, ya podés gestionar tus paseos")
       if (role === 'WALKER') {
-        // persiste el token para que el PUT del paso 2 quede autenticado, sin disparar
-        // todavía el redirect de GuestOnly (ver finishWalkerSetup)
+        // El paso de cobertura usa el token antes de completar el ingreso.
         writeSession(session)
         setPendingSession(session)
         setStep('coverage')
       } else {
+        setStep('firstPet')
         signIn(session)
-        goHome()
       }
     } catch (err) {
       // el mensaje del backend queda en inglés para logs/debug; acá siempre mostramos español
@@ -251,6 +247,13 @@ export function RegisterPage() {
     }
   }
 
+  if (session) {
+    const target = session.user.role === 'CLIENT'
+      ? (step === 'firstPet' ? paths.firstPet : paths.walks)
+      : paths.home
+    return <Navigate to={target} replace />
+  }
+
   if (step === 'coverage') {
     return <WalkerCoverageStep zones={zones} onDone={finishWalkerSetup} />
   }
@@ -264,8 +267,9 @@ export function RegisterPage() {
       </div>
 
       <div className="mb-6">
+        {role === 'CLIENT' && <p className="mb-2 text-label-sm font-semibold text-primary">Paso 1 de 2</p>}
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="text-headline-lg font-bold text-on-surface">Creá tu cuenta</span>
+          <h1 className="text-headline-lg font-bold text-on-surface">Creá tu cuenta</h1>
           <span className="text-[26px]">🐾</span>
         </div>
         <p className="text-body-md text-on-surface-variant">
@@ -388,7 +392,7 @@ export function RegisterPage() {
               type="submit"
               className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-primary text-label-lg text-on-primary shadow-md transition-all hover:bg-primary-container active:scale-[0.98] disabled:opacity-60"
             >
-              <span>{submitting ? 'Creando cuenta…' : 'Crear cuenta'}</span>
+              <span>{submitting ? 'Creando cuenta…' : role === 'CLIENT' ? 'Continuar' : 'Crear cuenta'}</span>
               <Icon name="arrow_forward" className="text-[20px]" />
             </button>
           </div>

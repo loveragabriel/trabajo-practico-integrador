@@ -72,6 +72,17 @@ class WalkPetServiceTest {
     }
 
     @Test
+    void rejectsJoiningAtOrAfterTheStartTimeEvenIfStillPublished() {
+        for (var start : List.of(now, now.minusMinutes(1))) {
+            var walk = walk(WalkStatus.PUBLISHED, 1, start);
+            assertThatThrownBy(() -> service.join(walk, pet()))
+                    .isInstanceOf(BusinessRuleViolationException.class)
+                    .hasMessageContaining("hora de inicio");
+        }
+        verifyNoInteractions(walkPetRepository);
+    }
+
+    @Test
     void rejectsJoinWhenCapacityIsAlreadyReached() {
         Walk walk = walk(WalkStatus.PUBLISHED, 1, now.plusHours(3));
         when(walkPetRepository.countByWalkIdAndStatus(walkId, BookingStatus.JOINED)).thenReturn(1L);
@@ -126,6 +137,16 @@ class WalkPetServiceTest {
         assertThatThrownBy(() -> service.cancel(walk, petId))
                 .isInstanceOf(BusinessRuleViolationException.class);
         verify(walkPetRepository, never()).countByWalkIdAndStatus(any(), any());
+    }
+
+    @Test
+    void rejectsCancellingAnInProgressWalkEvenBeforeItsScheduledStart() {
+        Walk walk = walk(WalkStatus.IN_PROGRESS, 1, now.plusHours(3));
+        WalkPet joined = booking(BookingStatus.JOINED);
+        when(walkPetRepository.findByWalkIdAndPetId(walkId, petId)).thenReturn(Optional.of(joined));
+        assertThatThrownBy(() -> service.cancel(walk, petId))
+                .isInstanceOf(BusinessRuleViolationException.class);
+        assertThat(joined.getStatus()).isEqualTo(BookingStatus.JOINED);
     }
 
     @Test

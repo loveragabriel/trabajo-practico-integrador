@@ -1,9 +1,11 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, type Location } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
-// Login y registro no tienen sentido con una sesión abierta.
 export function GuestOnly() {
   const { session } = useAuth()
-  return session ? <Navigate to={paths.home} replace /> : <Outlet />
+  const { state } = useLocation()
+  const from = (state as { from?: Location } | null)?.from
+  const target = from ?? (session?.user.role === 'CLIENT' ? paths.walks : paths.home)
+  return session ? <Navigate to={target} state={from?.state} replace /> : <Outlet />
 }

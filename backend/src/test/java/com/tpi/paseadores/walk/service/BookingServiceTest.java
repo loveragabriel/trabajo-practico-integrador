@@ -13,7 +13,7 @@ import com.tpi.paseadores.walk.domain.Walk;
 import com.tpi.paseadores.walk.domain.WalkStatus;
 import com.tpi.paseadores.walk.dto.BookingResponse;
 import com.tpi.paseadores.walk.dto.ClientBookingResponse;
-import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
+import com.tpi.paseadores.walk.dto.ClientBookingPeriod;
 import com.tpi.paseadores.walk.repository.WalkRepository;
 import com.tpi.paseadores.walk.repository.WalkSearchRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -129,9 +129,9 @@ class BookingServiceTest {
     void myBookingsUsesCabaTimeAndKeepsOnlyTheRequestedPage() {
         actor(UserRole.CLIENT, true);
         var row = clientBooking();
-        when(searchRepository.findBookingsForClient(actorId, WalkAgendaPeriod.UPCOMING, now, 0, 1))
+        when(searchRepository.findBookingsForClient(actorId, ClientBookingPeriod.UPCOMING, now, 0, 1))
                 .thenReturn(List.of(row, row));
-        var result = service.myBookings(actorId, WalkAgendaPeriod.UPCOMING, 0, 1);
+        var result = service.myBookings(actorId, ClientBookingPeriod.UPCOMING, 0, 1);
         assertThat(result.items()).containsExactly(row);
         assertThat(result.hasNext()).isTrue();
     }
@@ -139,7 +139,7 @@ class BookingServiceTest {
     @Test
     void onlyClientsCanListTheirBookings() {
         actor(UserRole.WALKER, true);
-        assertThatThrownBy(() -> service.myBookings(actorId, WalkAgendaPeriod.UPCOMING, 0, 12))
+        assertThatThrownBy(() -> service.myBookings(actorId, ClientBookingPeriod.UPCOMING, 0, 12))
                 .isInstanceOf(ForbiddenActionException.class);
         verifyNoInteractions(searchRepository);
     }
@@ -147,7 +147,7 @@ class BookingServiceTest {
     @Test
     void inactiveOrMissingUsersCannotListBookings() {
         when(users.findById(actorId)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.myBookings(actorId, WalkAgendaPeriod.UPCOMING, 0, 12))
+        assertThatThrownBy(() -> service.myBookings(actorId, ClientBookingPeriod.UPCOMING, 0, 12))
                 .isInstanceOf(ForbiddenActionException.class);
         verifyNoInteractions(searchRepository);
     }
@@ -156,7 +156,7 @@ class BookingServiceTest {
     void validatesPaginationBeforeQueryingBookings() {
         actor(UserRole.CLIENT, true);
         for (int[] values : List.of(new int[]{-1, 12}, new int[]{0, 0}, new int[]{0, 51})) {
-            assertThatThrownBy(() -> service.myBookings(actorId, WalkAgendaPeriod.UPCOMING, values[0], values[1]))
+            assertThatThrownBy(() -> service.myBookings(actorId, ClientBookingPeriod.UPCOMING, values[0], values[1]))
                     .isInstanceOf(InvalidFieldException.class);
         }
         verifyNoInteractions(searchRepository);

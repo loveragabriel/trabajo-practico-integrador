@@ -13,6 +13,7 @@ import com.tpi.paseadores.walk.domain.BookingStatus;
 import com.tpi.paseadores.walk.domain.WalkStatus;
 import com.tpi.paseadores.walk.dto.BookingResponse;
 import com.tpi.paseadores.walk.dto.JoinedPetResponse;
+import com.tpi.paseadores.walk.dto.ClientBookingPeriod;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
 import com.tpi.paseadores.walk.dto.WalkReadResponse;
 import com.tpi.paseadores.walk.dto.WalkSearchFilters;
@@ -333,18 +334,18 @@ class WalkControllerTest {
     @Test
     void myBookingsUsesTokenIdentityAndTypedFilters() throws Exception {
         UUID actor = UUID.randomUUID();
-        when(bookingService.myBookings(actor, WalkAgendaPeriod.HISTORY, 1, 5))
+        when(bookingService.myBookings(actor, ClientBookingPeriod.HISTORY, 1, 5))
                 .thenReturn(new PageResponse<>(List.of(), 1, 5, false));
         mvc.perform(get("/api/walks/bookings/mine").header("Authorization", token(actor, "CLIENT"))
                 .param("period", "HISTORY").param("page", "1").param("size", "5"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(1));
-        verify(bookingService).myBookings(actor, WalkAgendaPeriod.HISTORY, 1, 5);
+        verify(bookingService).myBookings(actor, ClientBookingPeriod.HISTORY, 1, 5);
     }
 
     @Test
     void walkersCannotListClientBookings() throws Exception {
         UUID actor = UUID.randomUUID();
-        when(bookingService.myBookings(actor, WalkAgendaPeriod.UPCOMING, 0, 12)).thenThrow(new ForbiddenActionException("Sin permiso"));
+        when(bookingService.myBookings(actor, ClientBookingPeriod.UPCOMING, 0, 12)).thenThrow(new ForbiddenActionException("Sin permiso"));
         mvc.perform(get("/api/walks/bookings/mine").header("Authorization", token(actor, "WALKER")))
                 .andExpect(status().isForbidden());
     }

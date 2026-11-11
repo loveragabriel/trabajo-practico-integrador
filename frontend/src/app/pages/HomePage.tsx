@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { useAuth } from '@/features/auth'
 
 export function HomePage() {
   const { session } = useAuth()
+  if (session?.user.role === 'CLIENT') return <Navigate to={paths.walks} replace />
   const isWalker = session?.user.role === 'WALKER'
 
   return (

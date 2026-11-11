@@ -1,83 +1,18 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { generatePath, Link, useLocation, useParams } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { useAuth } from '@/features/auth'
-import { bookingError, joinWalk } from '@/features/bookings/api/bookings'
 import { ZoneCoverageMap, useZones } from '@/features/map'
-import { loadMyPets, petSizeLabels, type Pet } from '@/features/pets/api/pets'
+import { petSizeLabels } from '@/features/pets/api/pets'
 import { WalkReviewsSection } from '@/features/reviews/components/WalkReviewsSection'
 import { Icon } from '@/shared/components/Icon'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { formatWalkDate } from '../api/search'
 import { walkStatusBadgeClass, walkStatusLabels, type WalkDetails } from '../api/walkReadContract'
 import { loadJoinedPets, loadWalkDetail, type JoinedPet } from '../api/walks'
+import { ClientWalkDetail } from '../components/ClientWalkDetail'
 import { WalkStateActions } from '../components/WalkStateActions'
 import { useWalkResource } from '../hooks/useWalkResource'
-
-function JoinWalkForm({ walkId, onJoined }: { walkId: string; onJoined: () => void }) {
-  const [pets, setPets] = useState<Pet[] | null>(null)
-  const [petsError, setPetsError] = useState<string | null>(null)
-  const [petId, setPetId] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const posting = useRef(false)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    loadMyPets(controller.signal).then((result) => {
-      setPets(result)
-      if (result.length === 1) setPetId(result[0].id)
-    }).catch((failure: unknown) => {
-      if (controller.signal.aborted) return
-      setPetsError(failure instanceof Error ? failure.message : 'No pudimos cargar tus mascotas.')
-    })
-    return () => controller.abort()
-  }, [])
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (posting.current || !petId) return
-    posting.current = true
-    setSubmitting(true)
-    setError(null)
-    try {
-      await joinWalk(walkId, petId)
-      onJoined()
-    } catch (failure) {
-      setError(bookingError(failure))
-    } finally {
-      posting.current = false
-      setSubmitting(false)
-    }
-  }
-
-  if (petsError) return <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{petsError}</p>
-  if (!pets) return <p role="status" className="text-sm text-slate-600">Cargando tus mascotas…</p>
-  if (!pets.length) return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-      <p>Necesitás una mascota registrada para reservar.</p>
-      <Link to={paths.newPet} className="mt-2 inline-block font-medium text-blue-700 underline">Agregar mascota</Link>
-    </div>
-  )
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-      <label className="block text-sm font-medium">
-        Mascota
-        <select value={petId} onChange={(event) => setPetId(event.target.value)} required
-          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2">
-          <option value="" disabled>Elegí una mascota</option>
-          {pets.map((pet) => <option key={pet.id} value={pet.id}>{pet.name}</option>)}
-        </select>
-      </label>
-      {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-      <button type="submit" disabled={submitting || !petId}
-        className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50">
-        {submitting ? 'Reservando…' : 'Reservar'}
-      </button>
-    </form>
-  )
-}
 
 function WalkOwnerSummaryCard({ walk }: { walk: WalkDetails }) {
   return (
@@ -220,6 +155,12 @@ export function WalkDetailPage() {
     </section>
   )
 
+  if (session.user.role === 'CLIENT') {
+    const state = location.state as { search?: string; fromBookings?: boolean; bookingsSearch?: string } | null
+    return <ClientWalkDetail walk={walk} zone={zone} loading={loading} error={error}
+      search={state?.search} fromBookings={state?.fromBookings} bookingsSearch={state?.bookingsSearch} reload={reload} />
+  }
+
   if (ownWalk) return (
     <section className="mx-auto max-w-2xl space-y-5 pb-36" aria-busy={loading}>
       <Link to={paths.myWalks} className="text-label-md text-primary underline-offset-2 hover:underline">Volver a mis paseos</Link>
@@ -271,15 +212,8 @@ export function WalkDetailPage() {
           </div>
           <aside className="rounded-2xl border border-slate-200 bg-white p-5"><h2 className="mb-3 font-bold">Ubicación orientativa del barrio</h2>{zone ? <ZoneCoverageMap zones={[zone]} /> : <p className="text-sm text-slate-600">{catalog.loading ? 'Cargando el barrio…' : 'No pudimos representar este barrio en el mapa.'}</p>}<p className="mt-3 text-xs text-slate-500">El encuentro se realiza en el punto publicado. El mapa no muestra recorridos ni ubicación en tiempo real.</p></aside>
         </div>
-        {session.user.role === 'CLIENT' && (
-          walk.status === 'PUBLISHED' && walk.availableSpots > 0
-            ? <JoinWalkForm walkId={walk.id} onJoined={reload} />
-            : <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-                {walk.status === 'FULL' ? 'Este paseo ya no tiene lugares disponibles.' : 'Este paseo ya no admite inscripciones.'}
-              </p>
-        )}
         {walk.status === 'COMPLETED' && (
-          <WalkReviewsSection walkId={walk.id} canReview={!ownWalk && session.user.role === 'CLIENT'} />
+          <WalkReviewsSection walkId={walk.id} canReview={false} />
         )}
       </>}
     </section>

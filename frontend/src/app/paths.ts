@@ -16,6 +16,7 @@ export const paths = {
   // CLIENT
   pets: '/pets',
   newPet: '/pets/new',
+  firstPet: '/pets/new?bienvenida=1',
   editPet: '/pets/:petId/edit',
   bookings: '/bookings',
 

@@ -3,6 +3,7 @@ package com.tpi.paseadores.walk.controller;
 import com.tpi.paseadores.shared.dto.PageResponse;
 import com.tpi.paseadores.shared.validation.Pagination;
 import com.tpi.paseadores.walk.dto.BookingResponse;
+import com.tpi.paseadores.walk.dto.ClientBookingPeriod;
 import com.tpi.paseadores.walk.dto.ClientBookingResponse;
 import com.tpi.paseadores.walk.dto.JoinedPetResponse;
 import com.tpi.paseadores.walk.dto.WalkAgendaPeriod;
@@ -103,7 +104,7 @@ public class WalkController {
 
     @GetMapping("/bookings/mine")
     public PageResponse<ClientBookingResponse> myBookings(@AuthenticationPrincipal String userId,
-                                              @RequestParam(defaultValue = "UPCOMING") WalkAgendaPeriod period,
+                                              @RequestParam(defaultValue = "UPCOMING") ClientBookingPeriod period,
                                               @RequestParam(defaultValue = Pagination.DEFAULT_PAGE) int page,
                                               @RequestParam(defaultValue = Pagination.DEFAULT_SIZE) int size) {
         return bookings.myBookings(UUID.fromString(userId), period, page, size);

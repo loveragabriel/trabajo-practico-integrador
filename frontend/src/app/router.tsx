@@ -25,9 +25,9 @@ export const router = createBrowserRouter([
     element: <GuestOnly />,
     children: [
       { path: paths.login, element: <LoginPage /> },
-      { path: paths.register, element: <RegisterPage /> },
     ],
   },
+  { path: paths.register, element: <RegisterPage /> },
   {
     element: <AppLayout />,
     children: [

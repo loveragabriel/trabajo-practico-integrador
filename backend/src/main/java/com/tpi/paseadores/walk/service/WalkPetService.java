@@ -37,6 +37,11 @@ public class WalkPetService {
             throw new BusinessRuleViolationException("Este paseo ya no admite inscripciones.");
         }
 
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (!walk.getStartTime().isAfter(now)) {
+            throw new BusinessRuleViolationException("Ya pasó la hora de inicio de este paseo.");
+        }
+
         long occupied = walkPetRepository.countByWalkIdAndStatus(walk.getId(), BookingStatus.JOINED);
         var existing = walkPetRepository.findByWalkIdAndPetId(walk.getId(), pet.getId());
         if (existing.isPresent() && existing.get().getStatus() == BookingStatus.JOINED) {
@@ -46,7 +51,6 @@ public class WalkPetService {
             throw new BusinessRuleViolationException("Ya no quedan lugares disponibles en este paseo.");
         }
 
-        LocalDateTime now = LocalDateTime.now(clock);
         WalkPet booking;
         if (existing.isPresent()) {
             booking = existing.get();
@@ -66,8 +70,11 @@ public class WalkPetService {
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             return;
         }
+        if (walk.getStatus() != WalkStatus.PUBLISHED && walk.getStatus() != WalkStatus.FULL) {
+            throw new BusinessRuleViolationException("Ya no se puede cancelar la reserva de este paseo.");
+        }
         if (!walk.getStartTime().isAfter(LocalDateTime.now(clock).plusHours(2))) {
-            throw new BusinessRuleViolationException("Ya no se puede cancelar: faltan menos de dos horas para el paseo.");
+            throw new BusinessRuleViolationException("Para cancelar, tienen que faltar más de dos horas para el paseo.");
         }
 
         long occupied = walkPetRepository.countByWalkIdAndStatus(walk.getId(), BookingStatus.JOINED);

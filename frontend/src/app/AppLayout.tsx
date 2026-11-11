@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useLayoutEffect } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 import { Icon } from '@/shared/components/Icon'
 import type { Role } from '@/shared/types/user'
@@ -14,8 +15,8 @@ interface NavItem {
 const navByRole: Record<Role, NavItem[]> = {
   CLIENT: [
     { to: paths.walks, label: 'Buscar', icon: 'explore' },
-    { to: paths.bookings, label: 'Reservas', icon: 'calendar_today' },
-    { to: paths.pets, label: 'Mascotas', icon: 'pets' },
+    { to: paths.bookings, label: 'Mis reservas', icon: 'calendar_today' },
+    { to: paths.profile, label: 'Perfil', icon: 'account_circle' },
   ],
   WALKER: [
     { to: paths.myWalks, label: 'Mis paseos', icon: 'pets' },
@@ -29,6 +30,14 @@ function initials(name: string) {
 
 export function AppLayout() {
   const { session, signOut } = useAuth()
+  const location = useLocation()
+  const isClient = session?.user.role === 'CLIENT'
+  useLayoutEffect(() => {
+    if (isClient) window.scrollTo(0, 0)
+  }, [isClient, location.pathname])
+  const isPetWelcome = isClient && location.pathname === paths.newPet
+    && new URLSearchParams(location.search).get('bienvenida') === '1'
+  if (isPetWelcome) return <main className="mx-auto min-h-screen max-w-md px-5 py-6"><Outlet /></main>
   const items = session ? navByRole[session.user.role] : []
 
   return (
@@ -49,7 +58,7 @@ export function AppLayout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end
+                  end={item.to !== paths.walks}
                   className={({ isActive }) =>
                     `flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-label-md transition-colors ${
                       isActive ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -107,7 +116,7 @@ export function AppLayout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end
+                end={item.to !== paths.walks}
                 className={({ isActive }) =>
                   `flex min-w-[64px] flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-colors ${
                     isActive ? 'text-primary' : 'text-on-surface-variant'

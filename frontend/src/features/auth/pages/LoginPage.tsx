@@ -1,5 +1,5 @@
 import { useId, useState, type SubmitEvent } from 'react'
-import { Link, useLocation, useNavigate, type Location } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { paths } from '@/app/paths'
 import { login } from '@/features/auth/api/auth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -10,9 +10,6 @@ import { TextField } from '@/shared/components/TextField'
 
 export function LoginPage() {
   const { signIn } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = (location.state as { from?: Location } | null)?.from?.pathname ?? paths.home
 
   const emailId = useId()
   const passwordId = useId()
@@ -29,7 +26,6 @@ export function LoginPage() {
     try {
       const session = await login({ email, password })
       signIn(session)
-      navigate(from, { replace: true })
     } catch (err) {
       // el mensaje del backend queda en inglés para logs/debug; acá siempre mostramos español
       setError(
@@ -57,7 +53,7 @@ export function LoginPage() {
         <section className="mt-4 mb-5">
           <div className="mb-2.5 inline-flex items-center gap-2 rounded-full bg-secondary-fixed/50 px-2.5 py-1 text-on-secondary-fixed">
             <Icon name="verified_user" filled className="text-[16px] text-secondary" />
-            <span className="text-label-sm font-medium">Comunidad verificada BA</span>
+            <span className="text-label-sm font-medium">Paseos grupales en CABA</span>
           </div>
           <h1 className="text-headline-lg font-bold tracking-tight text-on-surface">¡Hola de nuevo! 🐾</h1>
           <p className="mt-1.5 leading-relaxed text-body-md text-on-surface-variant">
@@ -102,22 +98,7 @@ export function LoginPage() {
                 }
               />
 
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex cursor-pointer select-none items-center gap-2">
-                  <span className="relative inline-flex h-[22px] w-[22px] items-center justify-center">
-                    <input type="checkbox" defaultChecked className="peer sr-only" />
-                    <span className="absolute inset-0 rounded bg-surface-container-high transition-colors peer-checked:bg-primary" />
-                    <Icon name="check" className="relative scale-0 text-[16px] text-on-primary transition-transform peer-checked:scale-100" />
-                  </span>
-                  <span className="text-body-sm text-on-surface-variant">Recordarme</span>
-                </label>
-                {/* TODO: no existe recuperación de contraseña todavía */}
-                <button type="button" className="text-label-md text-primary underline-offset-2 hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-
-              {error && <p className="text-body-sm text-error">{error}</p>}
+              {error && <p role="alert" className="text-body-sm text-error">{error}</p>}
 
               <button
                 type="submit"
@@ -143,7 +124,7 @@ export function LoginPage() {
 
         <div className="flex items-center justify-center gap-2 pb-6 text-on-surface-variant/80">
           <Icon name="shield" filled className="text-[18px] text-secondary" />
-          <span className="text-center text-caption">Paseos grupales protegidos y seguros en tu barrio</span>
+          <span className="text-center text-caption">Encontrá paseos grupales en tu barrio</span>
         </div>
       </AppScreen>
     </>

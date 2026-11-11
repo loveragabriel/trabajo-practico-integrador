@@ -22,6 +22,7 @@ A web application that connects pet owners with dog walkers in the City of Bueno
 - [Installation and Setup](#installation-and-setup)
 - [Repository Structure](#repository-structure)
 - [Delivery Roadmap](#delivery-roadmap)
+- [Informe y demostración](#informe-y-demostración)
 
 ## Purpose
 
@@ -107,22 +108,28 @@ Each row is a client's booking of one pet into a published walk: it carries its 
 
 ## Installation and Setup
 
-> ⚠️ Section to be completed 
+Requisitos: JDK 21, PostgreSQL 14 o superior, Node.js 24 y pnpm 11.25.0. Creá una base vacía y configurá `DB_URL` (por ejemplo `jdbc:postgresql://localhost:5432/paseadores`), `DB_USER`, `DB_PASSWORD` y `JWT_SECRET`. Flyway crea las tablas y carga los barrios al iniciar; no hace falta ejecutar además el SQL manual.
+
+Desde la raíz, en terminales separadas:
 
 ```bash
-# Backend
+# Terminal 1 (backend; en Windows también se puede usar mvnw.cmd)
 cd backend
-./mvnw spring-boot:run
-
-# Frontend (requires Node.js and pnpm)
-cd frontend
-pnpm install
-pnpm dev        # http://localhost:5173
+bash mvnw spring-boot:run
 ```
 
-Required environment variables (backend): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
+```bash
+# Terminal 2 (frontend)
+cd frontend
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-In development, the Vite dev server proxies `/api` requests to the backend at `http://localhost:8080`.
+La aplicación abre en [localhost:5173](http://localhost:5173) y Swagger en [localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html). Vite reenvía las solicitudes de `/api` al backend.
+
+En producción, el [Dockerfile](Dockerfile) empaqueta la interfaz y la API en un servicio. Configurá las cuatro variables del backend en el proveedor, con una base PostgreSQL persistente y una clave JWT privada, y exponé el puerto 8080. Antes de entregar, probá el recorrido desde el enlace público en una ventana sin sesión.
+
+Para más detalle, ver [ejecución local y pruebas](docs/ejecucion-local.md).
 
 ## Repository Structure
 
@@ -157,6 +164,13 @@ trabajo-practico-integrador/
 | Milestone | Deadline | Status |
 |---|---|---|
 | 1st Delivery — Proposal + Repository | 08/30/2026 | ✅ |
-| 2nd Delivery — DB design and modules | 09/27/2026 | 🔄 In progress |
+| 2nd Delivery — DB design and modules | 09/27/2026 | ✅ |
 | Final Delivery — Report, video, and deployment | 11/11/2026 | ⏳ Pending |
 | Oral Defense | Exam board | ⏳ Pending |
+
+## Informe y demostración
+
+- [Informe del proyecto (PDF)](docs/informe-final-paseadores.pdf)
+- [Estado de la entrega y recorrido para probar](docs/estado-entrega.md)
+- Video: pendiente de grabación y publicación.
+- Despliegue: pendiente de confirmar y probar desde un enlace público.
