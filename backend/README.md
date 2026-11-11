@@ -32,6 +32,6 @@ Registration, login and neighborhood catalog reads are available without a token
 
 ## Tests and Architecture
 
-Run `bash mvnw test` from this directory. Database integration tests run when `TPI_DB_TESTS=true` and the database variables point to a running, separate test database.
+All endpoints require `Authorization: Bearer <token>` except `/api/auth/**` (register and login — see the `auth` module). No token or an invalid one returns 403.
 
 `ArchitectureTest` checks that controllers call services, each feature uses only its own repositories, and feature dependencies have no cycles. It also keeps HTTP concerns out of services and feature dependencies out of `shared`. See the [architecture notes](../docs/arquitectura.md) and [module guide](../docs/modulos.md).
