@@ -1,52 +1,33 @@
-# Arquitectura y decisiones de diseño
+# Architecture and Design Decisions
 
-## Organización
+React and TypeScript provide the screens. Vite builds the app and proxies requests to the Spring Boot REST API during development. We use one backend application with a layered structure and one PostgreSQL database.
 
-El frontend (React + TypeScript con Vite y Tailwind CSS) consume una API REST Spring Boot. El backend utiliza un monolito por capas y PostgreSQL. Dentro del backend, los paquetes se organizan por dominio y cada módulo separa controlador, servicio, repositorio, entidad y DTO cuando corresponda.
+| Layer | Responsibility |
+|---|---|
+| React | Displays pages, forms, schedules and maps; reads the API responses |
+| Controllers | Read HTTP requests, validate input and return responses |
+| Services | Apply rules, check access and coordinate transactions |
+| Repositories | Read and write data through Spring Data JPA or JDBC |
+| PostgreSQL | Stores records and enforces keys, uniqueness and check constraints |
+| Shared code | Holds configuration, security and common error handling |
 
-| Componente/capa | Responsabilidad |
-| --- | --- |
-| React | Páginas, formularios, navegación, agenda y mapa. Consume DTOs de la API. Organizado por feature (ver abajo). |
-| Controller | Recibe HTTP, valida formato de entrada y devuelve respuestas. |
-| Service | Ejecuta casos de uso, autoriza operaciones y coordina transacciones. |
-| Repository | Consulta y persiste entidades con Spring Data JPA. |
-| PostgreSQL | Guarda los datos y aplica PK, FK, UNIQUE, CHECK e índices. |
-| Shared | Manejo uniforme de errores, configuración y validaciones comunes. |
+The backend is organized by domain. The frontend uses `features/` for pages, components, API calls and hooks, `app/` for routing and layout, and `shared/` for code that does not depend on a feature.
 
-No se incluyen microservicios: el dominio acotado y el plazo favorecen una sola API.
+## Design Decisions
 
-### Organización del frontend
+1. Owners and walkers share one `users` table. A fixed role distinguishes `CLIENT` and `WALKER`; the walker defaults apply only to walkers.
+2. Walkers publish walks and owners book directly. Published walks supply the availability, so we do not keep a separate availability calendar.
+3. `walk_pets` is a booking entity with a status and timestamp. Rebooking a cancelled spot reuses the same row.
+4. We use a predefined neighborhood catalog. Leaflet displays approximate positions from the frontend; the database does not store map polygons.
+5. Each walk keeps its own price and capacity. Changing the walker profile does not change a published walk.
+6. We keep history when a booking or walk is cancelled. The schema does not cascade deletes.
+7. Flyway applies the application migrations at startup. The standalone SQL and editable model are available in [database/](../database/README.md).
+8. An owner can review a completed walk once, even after booking for several pets. We update the walker's rating when we save the review.
 
-El frontend se organiza por feature, en espejo con los módulos del backend:
+## Access and Consistency
 
-| Carpeta | Contenido |
-| --- | --- |
-| `app/` | Arranque de la aplicación: router, providers, layout, rutas (`paths.ts`), inicio y 404. |
-| `features/<módulo>/` | Todo lo de un módulo: `pages/` (pantallas de sus rutas), componentes, llamadas a la API y hooks. |
-| `shared/` | Código sin lógica de negocio: cliente HTTP, componentes de UI genéricos, tipos y utilidades. |
+Spring Security checks JWTs. The backend uses the signed-in account to check role and ownership, and stores password hashes using BCrypt. Walker profiles shown to other signed-in users omit email and phone numbers.
 
-Reglas de dependencia: una feature puede usar `shared/`. Desde fuera de una feature solo se importa
-lo que expone su `index.ts` (su API pública); por ejemplo, la sesión se usa con
-`import { useAuth } from '@/features/auth'`, sin conocer cómo está organizada por dentro.
-`app/router.tsx` es el único lugar que importa páginas directamente, para armar el ruteo. Los
-imports usan el alias `@/` (`src/`).
+When a walker publishes, a transaction-scoped PostgreSQL advisory lock keeps two publications for the same walker from checking the schedule at the same time. When an owner books or cancels, the backend locks the walk row before checking or updating availability. A walk's date and time represent local time in Buenos Aires.
 
-## Decisiones
-
-1. **Una tabla `users`, dos roles fijos y excluyentes.** Evita duplicar identidad y autenticación. Los campos de tarifa y capacidad aplican a paseadores; `OWNER` los mantiene nulos. Los roles no se cambian una vez que existen relaciones de negocio. No se agregan tabla de roles ni tabla `perfil_paseador`.
-2. **El paseador publica; el dueño reserva directamente.** La disponibilidad es el conjunto de paseos publicados y futuros. No hay solicitud/aceptación ni tabla de disponibilidad independiente.
-3. **`walk_pets` es una entidad de reserva.** Tiene ID, estado y fecha, además de FKs. Debe implementarse como entidad JPA propia, no como un `@ManyToMany` sin atributos. Si se reactiva una reserva cancelada se actualiza la misma fila, respetando su unicidad.
-4. **Barrios predefinidos.** El mapa muestra cobertura de forma orientativa. La tabla `zones` no guarda polígonos ni coordenadas; Leaflet necesitará un catálogo estático de referencias por barrio. El texto del punto de encuentro tampoco implica navegación GPS.
-5. **Precio y cupo propios del paseo.** Los valores del perfil son sugerencias al publicar; `walks` conserva los valores pactados, aunque el paseador modifique luego sus predeterminados.
-6. **Historial sin borrado en cascada.** Desactivar usuarios y cancelar paseos/reservas preserva relaciones. El esquema no implementa borrado de mascotas con reservas; esa operación no es parte del MVP.
-7. **SQL canónico en `/database`.** Cumple la estructura pedida. Flyway es una integración futura; no se afirma que esté instalado.
-8. **Reseñas por dueño y paseo.** Un dueño puede valorar una vez un paseo aunque haya reservado varias mascotas. `rating_avg` y `review_count` son agregados del paseador y se actualizan en la misma transacción al crear una reseña.
-
-## Seguridad y consistencia planificadas
-
-- Spring Security valida JWT; el ID y rol del actor surgen del contexto autenticado. No confiar en `owner_id` o `author_id` enviados por el navegador para autorizar acciones.
-- Guardar contraseñas mediante hash BCrypt; no devolver `password_hash` en DTOs. Dirección y teléfono no se incluyen automáticamente en perfiles públicos.
-- Los servicios validan usuario activo, rol, propiedad de mascotas y titularidad de paseos. El frontend mejora la experiencia, pero no sustituye la autorización del backend.
-- Para reservar/cancelar, bloquear la fila del paseo en la transacción antes de comprobar cupo y modificar reservas. Para publicar/cambiar horarios, serializar por paseador bloqueando su fila de usuario antes de comprobar solapamientos. Todos los caminos de escritura deberán respetar esas convenciones.
-- Un error de validación o autorización no deja escrituras parciales. Las respuestas de error usan un formato uniforme, sin exponer credenciales.
-- Las fechas `timestamp` del esquema representan hora local de CABA. Backend, conexión y frontend deben usar consistentemente `America/Argentina/Buenos_Aires`. Una expansión a otras zonas horarias exigirá revisar este diseño.
+See the [module guide](modulos.md) and [data model](modelo-datos.md) for details.

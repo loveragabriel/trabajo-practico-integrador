@@ -1,65 +1,51 @@
-# Ejecución local
+# Local Setup
 
-Para trabajar en la aplicación levantamos dos procesos: la API en el puerto 8080 y el frontend en el 5173. PostgreSQL debe estar iniciado antes de ejecutar el backend.
+We run Spring Boot on port 8080 and Vite on port 5173. Start PostgreSQL before starting the backend.
 
-## Requisitos
+## Requirements
 
-Usamos Java 21, PostgreSQL 14 o superior, Node.js 24 y pnpm. El proyecto incluye el wrapper de Maven. Podemos comprobar las herramientas con:
+Use JDK 21, PostgreSQL 14 or later, Node.js 24 and pnpm 11.25.0. The repository includes the Maven wrapper.
 
 ```bash
 java -version
-node --version
-pnpm --version
+node -v
+pnpm -v
 ```
 
-Si pnpm no está instalado:
+If pnpm is not installed, run `npm install -g pnpm@11.25.0`.
 
-```bash
-npm install -g pnpm@11.25.0
-```
+## Database
 
-Los comandos siguientes parten de la raíz de `trabajo-practico-integrador` y están preparados para Git Bash en Windows.
-
-## Base de datos
-
-Si todavía no existe la base, la creamos una sola vez:
+If you already have a Paseadores database, keep its name and data. For a fresh installation, create an empty database once:
 
 ```bash
 createdb -h localhost -p 5432 -U postgres paseadores
 ```
 
-El comando solicita la contraseña de PostgreSQL. Si `createdb` no está en el PATH, podemos crear la base desde pgAdmin: conectarnos a la base `postgres` y ejecutar `CREATE DATABASE paseadores;`.
+If `createdb` is not on your PATH, connect to the `postgres` database in pgAdmin and run `CREATE DATABASE paseadores;`. Flyway creates the tables and loads the neighborhoods when Spring Boot starts. Do not run the standalone schema scripts against the same database.
 
-Si ya estamos usando una base del proyecto, conservamos su nombre y sus datos. Flyway aplica las migraciones al iniciar el backend; en una base nueva crea las tablas y carga los barrios. No ejecutamos además los scripts de creación manual sobre esa misma base.
+## Terminal 1: Backend
 
-## Terminal 1: backend
-
-Desde la raíz del proyecto, ajustamos el nombre de la base, el puerto y el usuario a nuestra instalación:
+From the repository root in Windows Git Bash, adjust the database name, port and user for your installation. If your `backend/.env` already contains all four values, you can skip the exports.
 
 ```bash
 export DB_URL='jdbc:postgresql://localhost:5432/paseadores'
 export DB_USER='postgres'
-read -r -s -p 'Contraseña de PostgreSQL: ' DB_PASSWORD
+read -r -s -p 'PostgreSQL password: ' DB_PASSWORD
 echo
 export DB_PASSWORD
-export JWT_SECRET='paseadores-clave-de-desarrollo-local-2026'
+export JWT_SECRET='paseadores-local-development-key-2026'
 cd backend
 MSYS_NO_PATHCONV=1 cmd.exe /c "mvnw.cmd spring-boot:run"
 ```
 
-La clave del ejemplo es solo para desarrollo local. En un despliegue configuramos una clave privada propia. Podemos exportar las variables en la terminal o usar un `.env` local en `backend` con formato `CLAVE=valor`: Spring lo importa opcionalmente al arrancar desde esa carpeta. Conservamos ese archivo fuera del repositorio.
+On Linux or macOS, use `bash mvnw spring-boot:run` instead of the last command. If you use `backend/.env`, start the backend from that directory and keep the file out of Git. The example JWT secret is for local use only.
 
-En Linux o macOS usamos las mismas variables y reemplazamos el último comando por:
+Keep the terminal open. The API is at [localhost:8080](http://localhost:8080), and the API contract is in [Swagger UI](http://localhost:8080/swagger-ui/index.html).
 
-```bash
-bash mvnw spring-boot:run
-```
+## Terminal 2: Frontend
 
-Dejamos esa terminal abierta. La API queda disponible en `http://localhost:8080` y Swagger en `http://localhost:8080/swagger-ui/index.html`.
-
-## Terminal 2: frontend
-
-Abrimos otra terminal en la raíz del proyecto:
+Open another terminal at the repository root:
 
 ```bash
 cd frontend
@@ -67,53 +53,36 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Abrimos `http://localhost:5173`. Para revisar directamente la búsqueda, usamos `http://localhost:5173/walks`.
+Open [localhost:5173](http://localhost:5173). If a different project is using port 5173, stop it with `Ctrl+C` in its own terminal or start Paseadores with `pnpm dev --port 5174`. The Vite proxy still uses port 8080 for the API.
 
-Vite reenvía las consultas `/api` al backend del puerto 8080. La búsqueda requiere una cuenta. Si no hay paseos publicados, la lista aparece vacía. Para crear uno seguimos [Publicación de paseos](publicacion-paseos.md).
-
-## Probar el recorrido completo
-
-1. Entrá como paseador, configurá un barrio en **Mi perfil** y publicá una salida futura con un solo lugar.
-2. En otro perfil del navegador, registrate como dueño, agregá una mascota y buscá la salida por barrio y día. Abrí el detalle y reservá para esa mascota.
-3. En **Mis reservas → Próximas**, cancelá si faltan más de dos horas, verificá la cancelación en **Historial** y volvé a reservar.
-4. Como paseador, iniciá la salida. Como dueño, comprobá que aparezca en **En curso**. Finalizala como paseador, volvé a **Historial** y elegí **Calificar el paseo**.
-
-El fondo del mapa requiere conexión a OpenStreetMap. El mapa indica el barrio, no el seguimiento de la salida.
-
-El catálogo de barrios (`GET /api/zones`) responde sin token. Para consultar paseos, agenda o reservas desde Swagger, iniciá sesión con una cuenta de prueba y autorizá el token; las rutas protegidas responden `401` sin una sesión válida.
-
-## Pruebas
-
-Frontend, desde la raíz:
+Check the API and the frontend proxy with:
 
 ```bash
-cd frontend
+curl -f http://localhost:8080/api/zones
+curl -f http://localhost:5173/api/zones
+```
+
+Both should return the same neighborhood catalog. If you chose port 5174, use that port for the second command. Walk search, the schedule and bookings require a signed-in account; protected API routes return `401` without a valid token.
+
+## Demo Walkthrough
+
+1. Sign in as a walker, set a service neighborhood in **My profile** (`Mi perfil`), and publish a future walk with one spot.
+2. In a separate browser profile, sign up as an owner, add a pet and find the walk by neighborhood and date. Open the details and book the spot.
+3. In **My bookings** (`Mis reservas`), cancel from **Upcoming** (`Próximas`) while more than two hours remain. Confirm it appears in **History** (`Historial`), then book again.
+4. Start the walk as the walker. Confirm the owner sees it under **In progress** (`En curso`). Complete it as the walker, then open **History** as the owner and choose **Review the walk** (`Calificar el paseo`).
+
+The map needs access to OpenStreetMap tiles. It shows an approximate neighborhood location.
+
+## Tests
+
+From `frontend`:
+
+```bash
 pnpm build
 pnpm lint
 node --import ./tests/register-hooks.mjs --test tests/*.test.ts
 ```
 
-Backend, desde la raíz en Git Bash de Windows:
+From `backend`, run `bash mvnw test` on Linux or macOS, or `MSYS_NO_PATHCONV=1 cmd.exe /c "mvnw.cmd test"` in Windows Git Bash. To include the database integration tests, point the database variables at a separate test database and set `TPI_DB_TESTS=true` for that command. Some tests write records, so use a database you do not share with the app.
 
-```bash
-cd backend
-MSYS_NO_PATHCONV=1 cmd.exe /c "mvnw.cmd test"
-```
-
-En Linux o macOS usamos `bash mvnw test` desde `backend`.
-
-Para ejecutar también las pruebas de integración, configuramos `DB_URL`, `DB_USER`, `DB_PASSWORD` y `JWT_SECRET` hacia una base exclusiva de pruebas. Desde `backend`, en Git Bash:
-
-```bash
-TPI_DB_TESTS=true MSYS_NO_PATHCONV=1 cmd.exe /c "mvnw.cmd test"
-```
-
-En Linux o macOS:
-
-```bash
-TPI_DB_TESTS=true bash mvnw test
-```
-
-La prueba de autenticación guarda un usuario de prueba; las de búsqueda revierten sus datos al terminar. Usamos una base separada para no agregar datos de prueba a la que compartimos durante el desarrollo.
-
-Para detener el backend o el frontend, usamos `Ctrl+C` en su terminal.
+To stop either server, press `Ctrl+C` in its terminal.

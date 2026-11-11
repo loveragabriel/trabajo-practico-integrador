@@ -1,38 +1,24 @@
 # Database
 
-PostgreSQL schema, seed data and verification queries for the Paseadores project.
+Paseadores uses PostgreSQL 14 or later. When you run the application, Flyway applies the [application migrations](../backend/src/main/resources/db/migration/). Start with an empty database and follow the [local setup guide](../docs/ejecucion-local.md).
 
-## Requirements
-
-- PostgreSQL 14+
-
-## Files
+## Standalone SQL and Schema
 
 | File | Purpose |
 |---|---|
-| `01_schema.sql` | DDL — enums, tables, constraints, indexes |
-| `02_seed.sql` | Initial zones catalog (CABA neighborhoods) |
-| `03_verify.sql` | Manual integrity checks — all queries should return 0 rows |
+| [01_schema.sql](01_schema.sql) | Creates types, tables, constraints and indexes |
+| [02_seed.sql](02_seed.sql) | Adds the initial Buenos Aires neighborhood catalog |
+| [03_verify.sql](03_verify.sql) | Runs manual integrity checks |
+| [schema.dbml](schema.dbml) | Editable model for diagramming |
 
-## Usage
-
-Run in order against an empty database:
+To inspect the standalone schema without the app, use a separate empty database and run these commands from `database/`:
 
 ```bash
-psql "$DATABASE_URL" -f 01_schema.sql
-psql "$DATABASE_URL" -f 02_seed.sql
-psql "$DATABASE_URL" -f 03_verify.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f 01_schema.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f 02_seed.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f 03_verify.sql
 ```
 
-`DATABASE_URL` follows the standard libpq format (libpq: PostgreSQL's own client library, used by `psql` and JDBC drivers):
+For these commands, `DATABASE_URL` is a PostgreSQL connection string for `psql`. The backend instead uses a JDBC URL in `DB_URL` and separate `DB_USER` and `DB_PASSWORD` values. Do not apply the standalone schema to a database managed by Flyway.
 
-```
-postgresql://<user>:<password>@<host>:<port>/<database>
-```
-
-This maps to the backend's own connection variables (see root `README.md`): `DB_USER`, `DB_PASSWORD`, `DB_URL`.
-
-## Notes
-
-- Flyway is an optional future integration (see `docs/arquitectura.md`, decision 7) — not confirmed as installed. Until/unless it's adopted, the backend connects to a database already initialized by running these scripts directly.
-- No cascading deletes: history (walks, bookings, reviews) is preserved even when a related row becomes inactive.
+The [data model guide](../docs/modelo-datos.md) explains the tables and how bookings and reviews keep their history.

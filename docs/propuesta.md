@@ -1,47 +1,27 @@
-# Propuesta y alcance vigente
+# Project Proposal and Scope
 
-Trabajo Final Integrador — Tecnicatura Universitaria en Programación a Distancia, UTN.
+Capstone project for UTN's distance learning program in Computer Programming.
 
-Integrantes: Gastón Lell, Juan Cruz Leal y Gabriel Lovera.
+Team: Gastón Lell, Juan Cruz Leal and Gabriel Lovera.
 
-## Problema y propósito
+## Problem
 
-Los dueños de perros en CABA necesitan encontrar paseadores que trabajen en su barrio y coordinar horarios. La coordinación mediante mensajes y redes sociales dispersa información sobre cobertura, disponibilidad y reservas. La propuesta es una aplicación web que centralice esa información y permita gestionar paseos e historial.
+Owners in Buenos Aires need to find walkers who cover their neighborhood and agree on a time. When they arrange everything through messages, it is easy to lose track of where to meet or how many spots are left. We built a web app where both roles can see the same information and check their history.
 
-El objetivo académico es desarrollar una solución acotada, con persistencia relacional, separación de responsabilidades y una interfaz web adaptable a dispositivos móviles.
+## What We Included
 
-## Alcance vigente del MVP
+- Registration, sign-in and profiles for owners (`CLIENT`) and walkers (`WALKER`).
+- A walker profile with service neighborhoods, a suggested price and a default capacity.
+- Pet records and a neighborhood catalog displayed with Leaflet and OpenStreetMap.
+- Group walks with a date, duration, meeting point, capacity and price per pet.
+- Search by neighborhood, date or time and direct booking for one pet per request.
+- Cancellation within the allowed window, schedules and booking history.
+- Reviews of completed walks by owners who participated.
 
-- Registro, inicio de sesión y perfiles con dos roles excluyentes: dueño (`OWNER`) o paseador (`WALKER`).
-- Perfil del paseador con zonas de cobertura, tarifa orientativa y capacidad predeterminada.
-- Gestión de las mascotas del dueño, necesaria para reservar paseos.
-- Zonas de CABA predefinidas y visualización de cobertura mediante Leaflet y OpenStreetMap.
-- Publicación de paseos grupales: zona, fecha/hora, duración, punto de encuentro, cupo y precio por mascota.
-- Búsqueda de paseos publicados por zona y horario, con cupo disponible.
-- Reserva directa de una o varias mascotas propias, una reserva por mascota; cancelación de reservas antes del inicio.
-- Agenda e historial para ambos roles.
-- Calificación y reseña del paseo completado por dueños participantes.
+We left out online payments, live tracking, native mobile apps, custom map polygons and recurring availability. Owners book directly, so there is no approval queue for walkers.
 
-## Fuera del MVP
+## Technology
 
-- Pagos online integrados.
-- Seguimiento GPS en tiempo real.
-- Aplicación móvil nativa.
-- Dibujo libre de zonas o modelado con polígonos geoespaciales.
-- Calendario recurrente de disponibilidad independiente de los paseos publicados.
-- Flujo de solicitud y aceptación/rechazo por el paseador.
-- Roles múltiples por usuario y administración de roles configurables.
+React, TypeScript, Vite and Tailwind CSS power the interface. The REST API uses Java and Spring Boot, with Spring Security and JWT for authentication. PostgreSQL stores the data, and Flyway applies the migrations. The Docker image packages the web app with the API.
 
-
-## Stack y estrategia
-
-| Capa | Tecnología planificada |
-| --- | --- |
-| Interfaz | React + TypeScript (Vite) + Tailwind CSS, con pnpm |
-| API REST | Java + Spring Boot |
-| Persistencia | PostgreSQL + Spring Data JPA |
-| Autenticación | Spring Security + JWT |
-| Mapa | Leaflet + OpenStreetMap |
-| Despliegue | Frontend Vercel/Netlify; backend Render/Railway; PostgreSQL Railway/Supabase, a definir en implementación |
-
-La arquitectura es un monolito por capas, organizado por módulos de dominio. Las responsabilidades y decisiones se detallan en [arquitectura](arquitectura.md), [módulos](modulos.md) y [modelo de datos](modelo-datos.md).
+For more detail, see the [architecture](arquitectura.md), [modules](modulos.md) and [data model](modelo-datos.md).
