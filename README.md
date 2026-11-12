@@ -138,5 +138,5 @@ The [Dockerfile](Dockerfile) builds the frontend into the backend image. The con
 - [Final report (English PDF)](docs/paseadores-final-report-en.pdf)
 - [Final report (Spanish PDF)](docs/informe-final-paseadores.pdf)
 - [Delivery status and demo walkthrough](docs/estado-entrega.md)
-- Demo video: recording and publication are pending.
-- Public deployment: the URL still needs to be confirmed and tested.
+- [Demo video](https://drive.google.com/file/d/1tM3KPhU4TORwfLzzkiR_hNMquNya0CiE/view?usp=sharing)
+- [Public deployment](https://dog-walk-app.onrender.com/)
