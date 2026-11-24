@@ -130,13 +130,15 @@ The [Dockerfile](Dockerfile) builds the frontend into the backend image. The con
 |---|---|---|
 | First delivery: proposal and repository | August 30, 2026 | Complete |
 | Second delivery: database design and modules | September 27, 2026 | Complete |
-| Final delivery: report, video and deployment | November 11, 2026 | Pending |
+| Final delivery: report, video and deployment | November 11, 2026 | Links published; report revised after stage 3 feedback; final checks pending |
 | Oral defense | Exam session | Pending |
 
 ## Final Report and Demo
 
-- [Final report (English PDF)](docs/paseadores-final-report-en.pdf)
-- [Final report (Spanish PDF)](docs/informe-final-paseadores.pdf)
+- [Final report (Spanish PDF)](docs/Informe_Final_Proyecto.pdf)
+- [Editable report (Word)](docs/Informe_Final_Proyecto.docx)
+- [Report text and figures](docs/Informe_Final_Proyecto.md)
+- [Stage 3 feedback and our changes (Spanish)](docs/correcciones-etapa-3.md)
 - [Delivery status and demo walkthrough](docs/estado-entrega.md)
 - [Demo video](https://drive.google.com/file/d/1tM3KPhU4TORwfLzzkiR_hNMquNya0CiE/view?usp=sharing)
 - [Public deployment](https://dog-walk-app.onrender.com/)

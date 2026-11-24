@@ -10,4 +10,12 @@
 | Booking history and reviews | Find a booking under Upcoming, In progress or History. From History, you can review a completed walk you took part in. |
 | Checks | Tests cover overlapping walks, permissions, the last available spot, status changes and how bookings are grouped. You cannot join a walk once its scheduled start time arrives. |
 
-The [local setup guide](ejecucion-local.md) has the commands and a walkthrough. The [final report](paseadores-final-report-en.pdf) includes the data model and screenshots for both roles.
+The [local setup guide](ejecucion-local.md) has the commands and a walkthrough. The [final report](Informe_Final_Proyecto.pdf) includes the data model and screenshots for both roles.
+
+## Stage 3 Review
+
+We expanded the report after the tutor’s feedback. It now explains the problem and its documentary evidence, the two actors, modules, entities, technical decisions and relevant use cases. It separates current restrictions from possible future work and describes the tools we used, including AI assistance. The [point-by-point response](correcciones-etapa-3.md) links each observation to the revised report.
+
+The [demo video](https://drive.google.com/file/d/1tM3KPhU4TORwfLzzkiR_hNMquNya0CiE/view?usp=sharing) and [public app](https://dog-walk-app.onrender.com/) have published links. Before the exam, we still need to confirm access without a signed-in team account, repeat the public walkthrough and check database persistence.
+
+In the November 24 review, all 51 frontend tests, the production build and lint passed. The build reports a JavaScript bundle above 500 kB, which remains a performance improvement. The latest [backend](https://github.com/loveragabriel/trabajo-practico-integrador/actions/runs/43103149189) and [frontend](https://github.com/loveragabriel/trabajo-practico-integrador/actions/runs/43099890827) CI runs succeeded. We could not repeat Maven locally because Maven Central name resolution failed before compilation. The earlier report’s 211 backend tests remain a previous result, and database integration tests still need an explicit run against a separate test database.
